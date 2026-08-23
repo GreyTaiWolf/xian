@@ -72,6 +72,8 @@ export interface PlayerState {
   achievements: string[];
   /** 新手引导是否完成 */
   tutorialDone: boolean;
+  /** 主线阶段索引（见 config/quests.json mainStages） */
+  mainQuestStage: number;
 }
 
 export interface ChronicleEntry {
@@ -102,6 +104,16 @@ export interface WorldState {
   faction: FactionState;
   /** 世界首领是否已被斩杀（首杀唯一奖励） */
   bossDefeated: boolean;
+  /** 待处理的行路异闻（null = 无） */
+  pendingTravelEvent: { eventId: string } | null;
+  /** 异闻历史：`事件id:选项id@世界日`，上限 40 */
+  travelEventHistory: string[];
+  /** 剧情分支标记 */
+  eventFlags: Record<string, number>;
+  /** 异闻冷却：事件id → 可再次触发的最早世界日 */
+  eventCooldowns: Record<string, number>;
+  /** 是否已进入过秘境（主线判定） */
+  realmEntered: boolean;
 }
 
 export interface Settings {
@@ -155,7 +167,7 @@ export function initialQuests(): QuestState[] {
 
 export function defaultState(): GameState {
   return {
-    version: 7,
+    version: 8,
     world: {
       seed: 882345,
       name: '沧溟界',
@@ -165,6 +177,11 @@ export function defaultState(): GameState {
       chronicle: [{ day: 1, text: '沧溟界初开，天道伊始。', major: false }],
       faction: { tension: 50, sectPower: 60, demonPower: 40 },
       bossDefeated: false,
+      pendingTravelEvent: null,
+      travelEventHistory: [],
+      eventFlags: {},
+      eventCooldowns: {},
+      realmEntered: false,
     },
     player: {
       name: '林道玄',
@@ -185,6 +202,7 @@ export function defaultState(): GameState {
       insight: 30,
       achievements: [],
       tutorialDone: false,
+      mainQuestStage: 0,
     },
     inventory: starterInventory(),
     equipment: emptyEquipment(),
@@ -305,5 +323,22 @@ export function migrateV6toV7(d: GameState): GameState {
       achievements: d.player.achievements ?? [],
       tutorialDone: d.player.tutorialDone ?? false,
     },
+  };
+}
+
+/** v7 → v8 迁移：补行路异闻状态与主线阶段。 */
+export function migrateV7toV8(d: GameState): GameState {
+  return {
+    ...d,
+    version: 8,
+    world: {
+      ...d.world,
+      pendingTravelEvent: d.world.pendingTravelEvent ?? null,
+      travelEventHistory: d.world.travelEventHistory ?? [],
+      eventFlags: d.world.eventFlags ?? {},
+      eventCooldowns: d.world.eventCooldowns ?? {},
+      realmEntered: d.world.realmEntered ?? false,
+    },
+    player: { ...d.player, mainQuestStage: d.player.mainQuestStage ?? 0 },
   };
 }

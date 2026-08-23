@@ -9,10 +9,11 @@ import {
   migrateV4toV5,
   migrateV5toV6,
   migrateV6toV7,
+  migrateV7toV8,
 } from '../game/state';
 
 export const SAVE_KEY = 'cangming-save';
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 interface Envelope {
   version: number;
@@ -28,6 +29,7 @@ const migrations: Record<number, (data: unknown) => unknown> = {
   4: (d) => migrateV4toV5(d as GameState),
   5: (d) => migrateV5toV6(d as GameState),
   6: (d) => migrateV6toV7(d as GameState),
+  7: (d) => migrateV7toV8(d as GameState),
 };
 
 /** 上次存档时间戳（离线快进用）。 */

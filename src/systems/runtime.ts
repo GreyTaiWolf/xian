@@ -28,6 +28,7 @@ import {
 import { generateAffixes } from '../game/equipment-gen';
 import { World } from '../world/map';
 import { rollTable, type RolledLoot } from './loot';
+import { pickTravelEvent, resolveTravelEvent as resolveTravelEventFn } from './travelEvents';
 
 export interface Monster {
   id: number;
@@ -127,6 +128,9 @@ export class GameRuntime {
   /** 秘境试炼：剩余双倍掉落击杀数 */
   private realmKillsLeft = 0;
   private realmReadyDay = 1;
+  /** 行路异闻：累计行走距离与下一次触发距离 */
+  private travelled = 0;
+  private nextTriggerDist = config.travelEvents.trigger.interval;
 
   private rng: () => number;
   private atkCd = 0;
@@ -139,8 +143,8 @@ export class GameRuntime {
 
   constructor(
     private store: Store<GameState>,
-    private log: (cls: LogCls, text: string) => void,
-    private sfx?: (name: SfxName) => void,
+    readonly log: (cls: LogCls, text: string) => void,
+    readonly sfx?: (name: SfxName) => void,
   ) {
     const s = store.get();
     this.map = new World(s.world.seed);
@@ -160,6 +164,27 @@ export class GameRuntime {
   }
 
   // ---------------- 状态辅助 ----------------
+  getState(): GameState {
+    return this.store.get();
+  }
+
+  setState(updater: (st: GameState) => GameState): void {
+    this.store.set(updater);
+  }
+
+  addMoney(delta: number): boolean {
+    if (this.store.get().player.money + delta < 0) return false;
+    this.store.set((st) => ({ ...st, player: { ...st.player, money: st.player.money + delta } }));
+    return true;
+  }
+
+  /** 气血灵力回满。 */
+  healFull(): void {
+    const st = this.stats();
+    this.player.hp = st.hpMax;
+    this.player.mp = st.mpMax;
+  }
+
   private stats() {
     return derivedStats(this.store.get());
   }
@@ -259,7 +284,9 @@ export class GameRuntime {
     this.now += dtMs;
     const st = this.stats();
 
-    // 玩家移动
+    // 玩家移动（记录实际位移用于异闻触发）
+    const prevX = this.player.x;
+    const prevY = this.player.y;
     let dx = this.moveDir.x;
     let dy = this.moveDir.y;
     if (dx === 0 && dy === 0 && this.moveTarget) {
@@ -273,6 +300,8 @@ export class GameRuntime {
       }
     }
     if (dx !== 0 || dy !== 0) this.moveEntity(this.player, st.spd, dx, dy, dt, PLAYER_RADIUS);
+    this.travelled += Math.hypot(this.player.x - prevX, this.player.y - prevY);
+    this.maybeTriggerTravelEvent();
 
     // 脱战回复
     if (this.now - this.hurtT > REGEN_DELAY) {
@@ -512,6 +541,7 @@ export class GameRuntime {
       this.player.mp = this.stats().mpMax;
       this.sfx?.('break');
       this.checkAchievements();
+      this.checkMainQuest();
     } else {
       this.store.set((st) => ({
         ...st,
@@ -742,8 +772,10 @@ export class GameRuntime {
     this.spawnWave(8, 0.8, 'player');
     this.realmKillsLeft = 8;
     this.realmReadyDay = this.store.get().world.day + 2;
+    this.store.set((st) => ({ ...st, world: { ...st.world, realmEntered: true } }));
     this.log('gold', '[秘境] 灵雾秘境开启！击杀 8 只秘境凶兽，掉落翻倍。');
     this.sfx?.('realm');
+    this.checkMainQuest();
   }
 
   // ---------------- 地点与交互 ----------------
@@ -759,10 +791,49 @@ export class GameRuntime {
 
   /** 城镇打坐：气血灵力尽复。 */
   restAtTown(): void {
-    const st = this.stats();
-    this.player.hp = st.hpMax;
-    this.player.mp = st.mpMax;
+    this.healFull();
     this.log('c', '[打坐] 你于霜落城打坐调息，气血灵力尽复。');
+  }
+
+  // ---------------- 行路异闻 ----------------
+  private maybeTriggerTravelEvent(): void {
+    if (this.travelled < this.nextTriggerDist) return;
+    this.travelled = 0;
+    this.nextTriggerDist = config.travelEvents.trigger.interval + this.rng() * 6;
+    const ev = pickTravelEvent(this.store.get(), this.rng);
+    if (!ev) return;
+    this.setState((st) => ({ ...st, world: { ...st.world, pendingTravelEvent: { eventId: ev.id } } }));
+    this.log('sys', `行至${ev.locationName}，你遇见了「${ev.title}」。`);
+    this.sfx?.('ui');
+  }
+
+  resolveTravelEvent(choiceId: string): void {
+    resolveTravelEventFn(this, choiceId);
+  }
+
+  /** 主线进度判定：条件满足自动推进阶段。 */
+  checkMainQuest(): void {
+    const s = this.store.get();
+    const stage = s.player.mainQuestStage;
+    const stages = config.quests.mainStages;
+    if (stage >= stages.length - 1) return;
+    let done = false;
+    switch (stage) {
+      case 0: done = s.player.kills >= 1; break;
+      case 1: done = s.player.kills >= 3; break;
+      case 2: done = s.player.level >= 10; break;
+      case 3: done = s.world.realmEntered; break;
+      case 4: done = s.world.bossDefeated; break;
+    }
+    if (done) {
+      this.setState((st) => ({
+        ...st,
+        player: { ...st.player, mainQuestStage: st.player.mainQuestStage + 1 },
+      }));
+      const next = stages[stage + 1];
+      this.log('gold', `[主线] ${next.chapter}：「${next.title}」——${next.summary}`);
+      this.sfx?.('achievement');
+    }
   }
 
   countItem(templateId: string): number {
@@ -880,6 +951,7 @@ export class GameRuntime {
       this.sfx?.('boss');
     }
     this.checkAchievements();
+    this.checkMainQuest();
     this.log('c', `击杀 ${mt.name} Lv.${m.lvl}（+${xp} 修为，+${money} 灵石）`);
   }
 
@@ -938,7 +1010,7 @@ export class GameRuntime {
     }
   }
 
-  private addXp(xp: number): void {
+  addXp(xp: number): void {
     const before = this.store.get().player.level;
     this.store.set((prev) => {
       const p = levelUp({ ...prev.player, xp: prev.player.xp + xp }, (lv) => {

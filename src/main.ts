@@ -151,6 +151,11 @@ function createWorld(name: string, seed: number, useAi: boolean): void {
       chronicle: [{ day: 1, text: `${name}初开，天道伊始。`, major: false }],
       faction: { tension: 50, sectPower: 60, demonPower: 40 },
       bossDefeated: false,
+      pendingTravelEvent: null,
+      travelEventHistory: [],
+      eventFlags: {},
+      eventCooldowns: {},
+      realmEntered: false,
     },
   }));
   clock.day = 1;

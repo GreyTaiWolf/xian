@@ -1,0 +1,154 @@
+{
+  "trigger": { "interval": 12, "chance": 0.3, "firstJourneyGuarantee": true },
+  "events": [
+    {
+      "id": "wounded_guest",
+      "title": "负伤客",
+      "locationName": "黑松坡",
+      "description": "暮色压住山道，一名灰衣修士倚在折松下，袖口渗血。他没有呼救，只将一枚烧裂的铜牌扣在掌中。",
+      "weight": 4,
+      "cooldownDays": 2,
+      "choices": [
+        {
+          "id": "use_medicine",
+          "label": "以回灵丹替他止血",
+          "description": "药力能压住伤势，但你也许会卷入一桩旧事。",
+          "cost": { "item": "hp_pill", "count": 1 },
+          "outcome": {
+            "resultText": "你替灰衣修士敷药止血。他缓过气来，执意引你去前方废窑，说那里藏着这次追杀的缘由。",
+            "mindDelta": 2,
+            "flags": { "helped_wounded": 1 },
+            "nextEventId": "old_kiln"
+          }
+        },
+        {
+          "id": "keep_distance",
+          "label": "留下一句警告后绕行",
+          "description": "黑风山附近恩怨难辨，保全自身也是散修的生存之道。",
+          "isFallback": true,
+          "outcome": {
+            "resultText": "你指出山雾将起，随即绕开折松。身后没有追赶声，只有铜牌落地的一声轻响。",
+            "mindDelta": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "old_kiln",
+      "title": "废窑藏宝",
+      "locationName": "山阴废窑",
+      "description": "灰衣修士带你来到半塌的废窑。他说此间埋着一批旧物，但要小心——妖兽似乎也嗅到了这里的气息。",
+      "weight": 3,
+      "cooldownDays": 2,
+      "choices": [
+        {
+          "id": "dig_treasure",
+          "label": "掘开浮土取宝",
+          "description": "趁妖兽未至，挖出埋藏的旧物。",
+          "outcome": {
+            "resultText": "你掘出一个铁匣，内有一锭灵石与两块玄铁。灰衣修士抱拳谢过，转身没入山雾。",
+            "rewards": { "money": 80, "items": [{ "item": "iron_ingot", "count": 2 }] },
+            "flags": { "kiln_treasure": 1 }
+          }
+        },
+        {
+          "id": "search_and_fight",
+          "label": "继续深入探查",
+          "description": "废窑深处似有低吼。富贵险中求，你握紧了兵刃。",
+          "isFallback": true,
+          "outcome": {
+            "resultText": "你惊动了盘踞废窑的妖兽！",
+            "combat": { "count": 3, "power": 0.3 }
+          }
+        }
+      ]
+    },
+    {
+      "id": "ancient_stela",
+      "title": "古碑异象",
+      "locationName": "荒丘古碑",
+      "description": "荒草间立着一方残碑，碑面刻着看不懂的古篆，隐隐有灵光流转。",
+      "weight": 4,
+      "cooldownDays": 1,
+      "choices": [
+        {
+          "id": "touch_stela",
+          "label": "以手触碰碑文",
+          "description": "灵光微动，似有传承在其中。",
+          "outcome": {
+            "resultText": "触碑瞬间，一段残缺功法涌入识海。你恍惚许久，再睁眼已是日暮——修为精进，但心神受摄。",
+            "rewards": { "xp": 90 },
+            "mindDelta": -3
+          }
+        },
+        {
+          "id": "leave_stela",
+          "label": "绕碑而行",
+          "description": "不明底细的东西，还是少碰为妙。",
+          "isFallback": true,
+          "outcome": {
+            "resultText": "你记下碑文方位，绕道而行。夜风拂过，古碑沉默如初。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lost_caravan",
+      "title": "迷途商队",
+      "locationName": "官道岔口",
+      "description": "一辆歪斜的货车陷在泥里，老车夫正发愁。车上堆着兽皮，远处似有兽影徘徊。",
+      "weight": 4,
+      "cooldownDays": 1,
+      "choices": [
+        {
+          "id": "help_pull",
+          "label": "帮忙推车赶路",
+          "description": "助人一臂，商队必有谢礼。",
+          "outcome": {
+            "resultText": "你运起灵力推动货车，老车夫千恩万谢，硬塞给你一袋灵石和几张上好的兽皮。",
+            "rewards": { "money": 60, "items": [{ "item": "wolf_pelt", "count": 2 }] },
+            "mindDelta": 1
+          }
+        },
+        {
+          "id": "walk_past",
+          "label": "径直赶路",
+          "description": "自己的修行要紧。",
+          "isFallback": true,
+          "outcome": {
+            "resultText": "你从货车旁走过。老车夫望着你的背影，叹了口气。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "spirit_spring",
+      "title": "灵泉",
+      "locationName": "涧底灵泉",
+      "description": "一道细泉从石缝中涌出，水色泛着莹光，饮一口便觉灵气入体。",
+      "weight": 5,
+      "cooldownDays": 1,
+      "choices": [
+        {
+          "id": "drink_spring",
+          "label": "痛饮灵泉",
+          "description": "泉水清冽，灵气充沛。",
+          "outcome": {
+            "resultText": "灵泉入腹，你感到浑身气血翻涌，伤势尽复，修为也增进了一分。",
+            "rewards": { "xp": 50 },
+            "healFull": true
+          }
+        },
+        {
+          "id": "skip_spring",
+          "label": "取水即走",
+          "description": "浅尝辄止，不贪机缘。",
+          "isFallback": true,
+          "outcome": {
+            "resultText": "你灌了一壶泉水，转身离开。水声潺潺，归于寂静。"
+          }
+        }
+      ]
+    }
+  ]
+}

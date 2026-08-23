@@ -24,5 +24,49 @@
       "target": { "kind": "kill", "monster": "stone_beast", "count": 3 },
       "reward": { "xp": 500, "money": 300, "contribution": 50 }
     }
+  ],
+  "mainStages": [
+    {
+      "id": "s0_first_kill",
+      "chapter": "第一章 · 初入仙途",
+      "title": "猎狼试炼",
+      "summary": "走出出生地，斩杀一只妖兽，证明你的实力。",
+      "cta": { "type": "none" }
+    },
+    {
+      "id": "s1_kills3",
+      "chapter": "第一章 · 初入仙途",
+      "title": "百炼成钢",
+      "summary": "累计击杀 3 只妖兽，熟悉战斗与掉落的节奏。",
+      "cta": { "type": "panel", "panel": "quest" }
+    },
+    {
+      "id": "s2_breakthrough",
+      "chapter": "第二章 · 筑基之途",
+      "title": "破境筑基",
+      "summary": "修为圆满后，在角色面板突破筑基——秘境将在筑基后开启。",
+      "cta": { "type": "panel", "panel": "char" }
+    },
+    {
+      "id": "s3_realm",
+      "chapter": "第二章 · 筑基之途",
+      "title": "秘境初探",
+      "summary": "前往灵雾秘境（地图 ✦ 标记处），完成一次试炼。",
+      "cta": { "type": "panel", "panel": "map" }
+    },
+    {
+      "id": "s4_boss",
+      "chapter": "第三章 · 问鼎沧溟",
+      "title": "狼王讨伐",
+      "summary": "深入东南荒野，斩杀盘踞巢穴的赤焰狼王。",
+      "cta": { "type": "panel", "panel": "map" }
+    },
+    {
+      "id": "s5_done",
+      "chapter": "终章",
+      "title": "问道长生",
+      "summary": "主线完成。世界仍在天道导演之下运转——继续探索，或静待新篇章。",
+      "cta": { "type": "none" }
+    }
   ]
 }

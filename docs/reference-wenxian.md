@@ -95,3 +95,51 @@
 | 8 | 战后结算弹窗 + 首通唯一奖励 | runtime kill 结算 + drops 首通表 | 中 |
 | 9 | 顶部状态条信息密度（战力/日期天气） | 顶栏改造 | 低 |
 | 10 | 多槽位存档 | save.ts 扩展（3 槽） | 中 |
+
+---
+
+# 深度学习补充（第二轮：实现层细节）
+
+> 本轮精读了任务契约、异闻结算、装备生成、时间/地图数据结构与数值基线。以下为可直接复用的实现模式。
+
+## A. 行路异闻完整实现模式（src/game/travelEvents.ts + data/travelEvents.ts）
+
+- **事件配置**：`{id, title, locationName, description, regionId, mapIds[], locationIds[], minStepCount, weight, cooldownKey, cooldownHours, stageOnly?, choices:[2]}`；choice = `{id, label, description, cost, isFallback?, outcome}`；outcome = `{resultText, preview, rewards?, mindValueDelta?, timeHours?, flags?, nextEventId?}`。
+- **触发管线**：候选筛选（区域/地图/起终点 locationIds/最短步数/冷却/指定事件）→ **首次行程必触发**（triggerChance=1），之后 `0.14 + 步数×0.025`，上限 0.72 → 权重抽取 → `pendingTravelEvent` 入档 → 日志"行至某地，你遇见了…"。
+- **结算管线**：`canAffordCost` → `spendCost`（扣灵石/物品）→ 加奖励 → 心境 ± → 时间推进 → `nextEventId` 因果延续（替换 pending，第二段剧情）→ 历史记录（40 条上限）→ `eventFlags` 标记（防重复剧情分支）→ 冷却入档。
+- **护栏**：两选一，至少一个 `isFallback` 免费选项；资源不足不能选贵选项；rng 注入可测试。
+
+## B. 任务系统契约（docs/QUEST_SYSTEM.md + game/quests.ts）
+
+- **目标类型两种真值来源**：①实时派生（gather=背包数量、realm、equip）——不写重复状态；②事件型进度（kill/visit/talk）——仅任务已接取时在 `objectiveProgress` 计数。
+- **前置条件**：quest（前置任务状态）/ cultivation / realm / region / sect；未满足只显示"先完成《XX》"式解锁提示，不显示任务详情。
+- **结算护栏 6 条**：不能重复接取；全部目标完成才可提交；材料检查与扣除用同一份背包数据；先置 completed 再发奖励（同次提交不能重复领）；奖励集中在 `completeQuest()`；击杀只在胜利结算记录（逃跑/战败不推进）。
+- **任务链示例**：采集凝气草 → 讨伐黑风山妖兽 → 送信落霞镇（visit+talk 双目标）；筑基后开南疆线。
+
+## C. 装备生成模式（game/generateEquipment.ts + data/affixPools.ts）
+
+- **主属性按部位规则表**（slotMainStatRules）：武器吃"境界×品级攻击范围表"；其他部位按武器值×部位系数派生（护符→神识、靴→闪避、戒指→暴击）。
+- **词条**：品级决定数量区间；词条池逐条过滤 `canAffixAppear(词条, 境界, 品级, 部位)`（特殊词条按境界解锁）；特殊效果 28 种（on_hit_fire/double_strike/execute_low_hp/armor_break/damage_reduce/start_shield/crit_extra_hit/revive_once/domain_skill…）。
+- **战力**：`powerBonus` 从加成合计；`applyBalanceLimits` 统一钳制；高一大境界装备"封印"（按封印后数值比较）。
+
+## D. 战斗技能数据化（data/skills.ts）
+
+- 技能=纯数据：`{id, name, category, allowedUsers[], targetType, hitType(fullDodge/halfDodge/noDodge), spiritCost, power, effectType(damage/heal/shield/restoreSpirit/control), weight, unlockRealm, description}`。
+- 闪避三档：普攻吃完整闪避、指向法术 50%、范围不可闪避；治疗/护盾 noDodge。
+- AI 行动按 `weight` 权重抽取（game/ai.ts）。
+
+## E. 时间系统（game/time.ts + data/time.ts）
+
+- 世界钟 = tick（小时制）：`(day-1)*24 + hour`；日历 年/月/日 + 节气（立春/惊蛰…）+ 天气池（晴朗/多云/雨天）。
+- 旅行按小时计费；采集冷却 24h、宝箱/机缘 720h；`normalizeWorldTimeState` 容错归一（tick 与 day/hour 互相校验）。
+
+## F. 网格地图（data/gridMaps.ts）
+
+- 48×32 手绘网格：`blockedRects`（障碍矩形）、`highCostRects`（地形成本×2）、`portals`（州域传送点：coord→目标 map+坐标）、地点坐标表（locationCoords）。
+- 与我们的无限噪声世界是互补路线：它靠手工布局保证叙事节奏，我们靠程序生成保证探索新鲜感；"地点锚点+传送"模式可借鉴。
+
+## G. 数值基线参考（BALANCE.md）
+
+- 初期：气血 220 / 灵力 48 / 攻击 34 / 防御 18 / 速度 18 / 闪避 2% / 暴击 5% / 暴击倍率 1.5；灵石 120 开局。
+- 数值原则：早期成长稳定短反馈；突破成本引导探索而非重复劳动；新资源必有来源和用途；难度按区域+境界递进；关键数值不进 UI 组件。
+- 突破成功率带心境/悟性修正（与我们的实现同构）；大境界倍率表驱动装备模板/掉落/敌人强度。

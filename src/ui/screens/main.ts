@@ -11,6 +11,7 @@ import { PanelManager } from '../panel';
 import { bindHotkeys } from '../hotkeys';
 import { Renderer } from '../../render/renderer';
 import type { GameRuntime, HudData } from '../../systems/runtime';
+import { canAffordChoice, choiceCostText } from '../../systems/travelEvents';
 import { panelBuilders, type PanelCtx } from '../panels';
 import { derivedStats, realmOf, xpNeed } from '../../game/stats';
 
@@ -171,9 +172,77 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
     }
     renderer.drawMinimapOverlay(mmCtx, rt, 120, 90);
     updateLocStrip();
+    updateMainQuest();
+    updateTravelDialog();
   };
 
   let lastMmKey = '';
+
+  // ---- 主线阶段卡 ----
+  const mqBar = el('div');
+  mqBar.id = 'mainquest';
+  view.appendChild(mqBar);
+  let lastMqStage = -1;
+  const updateMainQuest = (): void => {
+    const stage = store.get().player.mainQuestStage;
+    if (stage === lastMqStage) return;
+    lastMqStage = stage;
+    const def = config.quests.mainStages[stage];
+    if (!def) {
+      mqBar.classList.add('hidden');
+      mqBar.innerHTML = '';
+      return;
+    }
+    mqBar.classList.remove('hidden');
+    const cta =
+      def.cta.type === 'panel'
+        ? `<button class="btn sm" data-act="mq-cta" data-panel="${def.cta.panel}">前往</button>`
+        : '';
+    mqBar.innerHTML = `
+      <span class="mq-chapter">${def.chapter}</span>
+      <span class="mq-title">${def.title}</span>
+      <span class="mq-summary">${def.summary}</span>
+      ${cta}`;
+    mqBar.querySelector<HTMLElement>('[data-act="mq-cta"]')?.addEventListener('click', (e) => {
+      const b = e.currentTarget as HTMLElement;
+      pm.show(b.dataset.panel ?? 'inv');
+    });
+  };
+
+  // ---- 行路异闻弹窗 ----
+  let travelKey = '';
+  const updateTravelDialog = (): void => {
+    const pending = store.get().world.pendingTravelEvent;
+    const key = pending?.eventId ?? '';
+    if (key === travelKey) return;
+    travelKey = key;
+    view.querySelector<HTMLElement>('.travel-dialog')?.remove();
+    if (!pending) return;
+    const def = config.travelEvents.events.find((e) => e.id === pending.eventId);
+    if (!def) return;
+    const dialog = el('div', 'travel-dialog');
+    const choices = def.choices
+      .map((c) => {
+        const afford = canAffordChoice(rt, c);
+        const cost = choiceCostText(c);
+        return `<button class="t-choice${afford ? '' : ' off'}" data-act="t-choice" data-choice="${c.id}">
+          <b>${c.label}</b>${cost ? `<span class="tc-cost">${cost}</span>` : ''}
+          <span class="tc-desc">${c.description}</span>
+        </button>`;
+      })
+      .join('');
+    dialog.innerHTML = `
+      <div class="travel-card">
+        <div class="t-title">${def.title}</div>
+        <div class="t-loc">${def.locationName}</div>
+        <div class="t-desc">${def.description}</div>
+        ${choices}
+      </div>`;
+    dialog.querySelectorAll<HTMLElement>('[data-act="t-choice"]').forEach((b) => {
+      b.addEventListener('click', () => rt.resolveTravelEvent(b.dataset.choice ?? ''));
+    });
+    view.appendChild(dialog);
+  };
 
   // ---- 地点行动列表（走近城镇/宗门/秘境时出现） ----
   const locStrip = el('div');

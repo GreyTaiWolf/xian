@@ -14,6 +14,7 @@ import {
   migrateV4toV5,
   migrateV5toV6,
   migrateV6toV7,
+  migrateV7toV8,
   type GameState,
 } from '../src/game/state';
 import {
@@ -27,6 +28,7 @@ import {
 } from '../src/game/stats';
 import { generateAffixes } from '../src/game/equipment-gen';
 import { rollTable } from '../src/systems/loot';
+import { canAffordChoice, choiceCostText, pickTravelEvent, resolveTravelEvent } from '../src/systems/travelEvents';
 import { GameRuntime } from '../src/systems/runtime';
 import { validateDirectives } from '../src/ai/validator';
 import { bus } from '../src/core/eventbus';
@@ -231,15 +233,18 @@ console.log('== 6. 存档迁移链 ==');
   );
   const d4 = defaultState();
   check(
-    '默认存档为 v7 且字段齐全',
-    d4.version === 7 &&
+    '默认存档为 v8 且字段齐全',
+    d4.version === 8 &&
       d4.world.chronicle.length === 1 &&
       d4.player.quests.length === 3 &&
       d4.player.mind === 60 &&
       d4.player.insight === 30 &&
       d4.player.achievements.length === 0 &&
       d4.player.tutorialDone === false &&
+      d4.player.mainQuestStage === 0 &&
       d4.world.bossDefeated === false &&
+      d4.world.pendingTravelEvent === null &&
+      d4.world.realmEntered === false &&
       d4.inventory[0]!.affixes.length === 0,
   );
   const s4 = migrateV2toV3(s3b as GameState);
@@ -261,7 +266,15 @@ console.log('== 6. 存档迁移链 ==');
     'v6→v7 补成就/引导/首领标记',
     Array.isArray(s7.player.achievements) && s7.player.tutorialDone === false && s7.world.bossDefeated === false,
   );
-  const snap = JSON.parse(JSON.stringify(s7)) as GameState;
+  const s8 = migrateV7toV8(s7 as GameState);
+  check(
+    'v7→v8 补异闻状态与主线阶段',
+    s8.world.pendingTravelEvent === null &&
+      Array.isArray(s8.world.travelEventHistory) &&
+      typeof s8.world.eventFlags === 'object' &&
+      s8.player.mainQuestStage === 0,
+  );
+  const snap = JSON.parse(JSON.stringify(s8)) as GameState;
   check(
     '存档 JSON 往返后派生属性一致',
     JSON.stringify(derivedStats(s4)) === JSON.stringify(derivedStats(snap)),
@@ -438,6 +451,71 @@ console.log('== 11. 成就与首领首杀 ==');
   store.set((st) => ({ ...st, world: { ...st.world, day: 10 } }));
   rt.checkAchievements();
   check('世界日成就', store.get().player.achievements.includes('day_10'));
+}
+
+console.log('== 12. 行路异闻与主线阶段 ==');
+{
+  const store = new Store<GameState>(defaultState());
+  const rt = new GameRuntime(store, () => {});
+  for (let i = 0; i < 5; i++) rt.update(1000);
+  // 首次行走必触发：直接走够距离
+  const s0 = store.get();
+  const picked = pickTravelEvent(s0, Math.random);
+  check('首次行程必触发异闻', picked !== null, String(picked?.id));
+  const allIds = config.travelEvents.events.map((e) => e.id);
+  const cdAll = {
+    ...s0,
+    world: { ...s0.world, travelEventHistory: ['x@1'], eventCooldowns: Object.fromEntries(allIds.map((id) => [id, 999])) },
+  };
+  check('全部冷却时无异闻', pickTravelEvent(cdAll, () => 0.01) === null);
+  const cdFirst = {
+    ...s0,
+    world: {
+      ...s0.world,
+      travelEventHistory: ['x@1'],
+      eventCooldowns: { [config.travelEvents.events[0].id]: 999 },
+    },
+  };
+  const picked2 = pickTravelEvent(cdFirst, () => 0.01);
+  check(
+    '冷却中的事件不被选中',
+    picked2 !== null && picked2.id !== config.travelEvents.events[0].id,
+    String(picked2?.id),
+  );
+  check('选项代价文本', choiceCostText(config.travelEvents.events[0].choices[0]).length > 0);
+  // 手动挂起一个事件并结算
+  store.set((st) => ({ ...st, world: { ...st.world, pendingTravelEvent: { eventId: 'spirit_spring' } } }));
+  const before = { money: store.get().player.money, xp: store.get().player.xp, history: store.get().world.travelEventHistory.length };
+  rt.resolveTravelEvent('drink_spring');
+  const after = store.get();
+  check(
+    '异闻结算：修为+50 且历史入档、事件清除',
+    after.player.xp >= before.xp + 50 &&
+      after.world.travelEventHistory.length === before.history + 1 &&
+      after.world.pendingTravelEvent === null &&
+      (after.world.eventCooldowns['spirit_spring'] ?? 0) === after.world.day + 1,
+  );
+  // 因果延续：负伤客 → 废窑
+  store.set((st) => ({ ...st, world: { ...st.world, pendingTravelEvent: { eventId: 'wounded_guest' } } }));
+  rt.addItem('hp_pill', 5, 0, true);
+  rt.resolveTravelEvent('use_medicine');
+  check('因果延续弹出第二段', store.get().world.pendingTravelEvent?.eventId === 'old_kiln');
+  rt.resolveTravelEvent('dig_treasure');
+  const sFinal = store.get();
+  check(
+    '第二段结算：灵石+80 玄铁+2',
+    sFinal.player.money >= 180 && rt.countItem('iron_ingot') >= 2 && sFinal.world.pendingTravelEvent === null,
+  );
+  // 主线推进：击杀 1 → 阶段 1；击杀 3 → 阶段 2
+  store.set((st) => ({ ...st, player: { ...st.player, kills: 1 } }));
+  rt.checkMainQuest();
+  check('击杀 1 推进主线阶段', store.get().player.mainQuestStage === 1);
+  store.set((st) => ({ ...st, player: { ...st.player, kills: 3 } }));
+  rt.checkMainQuest();
+  check('击杀 3 推进主线阶段', store.get().player.mainQuestStage === 2);
+  store.set((st) => ({ ...st, player: { ...st.player, level: 10 } }));
+  rt.checkMainQuest();
+  check('筑基推进主线阶段（秘境解锁）', store.get().player.mainQuestStage === 3);
 }
 
 console.log(`\n结果: ${pass} 通过 / ${fail} 失败`);

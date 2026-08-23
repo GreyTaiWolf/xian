@@ -146,6 +146,30 @@ input[type=range]{padding:0;accent-color:var(--acc)}
 .tut-steps p{margin:7px 0;font-size:12.5px;color:var(--tx2);line-height:1.6}
 .tut-steps b{color:var(--tx)}
 
+/* 行路异闻弹窗 */
+.travel-dialog{position:absolute;inset:0;z-index:18;display:flex;align-items:center;justify-content:center;
+  background:rgba(8,10,16,.62)}
+.travel-card{width:min(430px,90%);background:var(--panel);border:1px solid var(--gold);border-radius:12px;
+  padding:16px 18px;box-shadow:0 14px 44px rgba(0,0,0,.55);animation:modalPop .2s cubic-bezier(.2,1.4,.4,1)}
+.travel-card .t-title{color:var(--gold);font-size:15px;letter-spacing:3px;text-align:center;text-indent:3px}
+.travel-card .t-loc{text-align:center;color:var(--tx3);font-size:11px;margin:2px 0 10px;letter-spacing:1px}
+.travel-card .t-desc{font-size:12.5px;color:var(--tx2);line-height:1.75;margin-bottom:12px;white-space:normal}
+.t-choice{display:block;width:100%;text-align:left;padding:9px 11px;margin-bottom:8px;border:1px solid var(--line);
+  border-radius:8px;background:var(--panel2);cursor:pointer;transition:border-color .15s}
+.t-choice:hover{border-color:var(--gold)}
+.t-choice b{color:var(--tx);font-size:12.5px}
+.t-choice .tc-desc{display:block;color:var(--tx2);font-size:11.5px;margin-top:2px;white-space:normal}
+.t-choice .tc-cost{float:right;color:var(--gold);font-size:11px;font-family:var(--mono);padding-left:8px}
+.t-choice.off{opacity:.55}
+
+/* 主线阶段卡 */
+#mainquest{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:5;display:flex;align-items:center;
+  gap:8px;background:rgba(10,10,14,.88);border:1px solid var(--line);border-radius:8px;padding:5px 10px;
+  max-width:74%;white-space:nowrap;animation:fadeIn .3s ease-out}
+#mainquest .mq-chapter{color:var(--tx3);font-size:11px}
+#mainquest .mq-title{color:var(--gold);font-size:12px;letter-spacing:1px}
+#mainquest .mq-summary{color:var(--tx2);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;max-width:300px}
+
 /* ============ 背包 ============ */
 .inv-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
 .cell{position:relative;aspect-ratio:1;background:var(--panel2);border:1px solid var(--line);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:15px}
