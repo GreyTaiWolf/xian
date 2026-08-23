@@ -3,6 +3,8 @@ name: Temporary source export
 on:
   push:
     branches: ["feat/ai-world-sim-p1"]
+  pull_request:
+    branches: [main]
 
 jobs:
   export:
