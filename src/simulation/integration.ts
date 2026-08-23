@@ -6,6 +6,7 @@ import { cloneSimulationState } from './utils';
 export const SIMULATION_HOURS_PER_WORLD_DAY = 24;
 const ADVANCE_CHUNK_DAYS = 365;
 const MAX_ADVANCE_DAYS = 100_000;
+const MAX_BOOTSTRAP_REPLAY_DAYS = 3_650;
 const EMITTED_EVENT_LIMIT = 240;
 
 /** 将模拟时钟映射到旧玩法使用的世界日编号。 */
@@ -44,13 +45,35 @@ export function advanceSimulationWorldDays(
   return { state, emittedEvents };
 }
 
-/** 创建并确定性快进到指定旧世界日，用于新档与 v8 存档迁移。 */
+function rebaseClockToWorldDay(state: WorldSimulationState, worldDay: number): WorldSimulationState {
+  const elapsedDays = worldDay - 1;
+  const dayInYear = elapsedDays % 120;
+  const seasonIndex = Math.floor(dayInYear / 30);
+  const seasons = ['spring', 'summer', 'autumn', 'winter'] as const;
+  state.clock = {
+    year: Math.floor(elapsedDays / 120) + 1,
+    season: seasons[seasonIndex],
+    dayOfSeason: (dayInYear % 30) + 1,
+    hour: 6,
+    totalHours: 6 + elapsedDays * SIMULATION_HOURS_PER_WORLD_DAY,
+  };
+  state.cadence.lastDailyTick = Math.max(state.cadence.lastDailyTick, worldDay);
+  state.cadence.lastMonthlyTick = Math.max(state.cadence.lastMonthlyTick, Math.floor(elapsedDays / 30) + 1);
+  state.eventCooldownUntilHour = {};
+  return state;
+}
+
+/**
+ * 创建并确定性快进到指定旧世界日，用于新档与 v8 存档迁移。
+ * 超长旧档最多重放十年规则，之后只重定位时钟；旧档原本没有模拟历史，因此无需制造数万次伪事件。
+ */
 export function createSimulationAtWorldDay(seed: number, worldDay: number): WorldSimulationState {
-  if (!Number.isInteger(worldDay) || worldDay < 1 || worldDay > MAX_ADVANCE_DAYS + 1) {
-    throw new Error(`worldDay 必须是 1 到 ${MAX_ADVANCE_DAYS + 1} 之间的整数`);
-  }
+  if (!Number.isSafeInteger(worldDay) || worldDay < 1) throw new Error('worldDay 必须是正安全整数');
+  const elapsedDays = worldDay - 1;
+  const replayDays = Math.min(elapsedDays, MAX_BOOTSTRAP_REPLAY_DAYS);
   const initial = createInitialWorldSimulation(seed);
-  return worldDay === 1 ? initial : advanceSimulationWorldDays(initial, worldDay - 1).state;
+  const replayed = replayDays === 0 ? initial : advanceSimulationWorldDays(initial, replayDays).state;
+  return elapsedDays === replayDays ? replayed : rebaseClockToWorldDay(replayed, worldDay);
 }
 
 function isUsableSimulation(value: unknown): value is WorldSimulationState {
@@ -79,12 +102,17 @@ export function synchronizeSimulationToWorldDay(
   seed: number,
   worldDay: number,
 ): WorldSimulationState {
-  if (!Number.isInteger(worldDay) || worldDay < 1) throw new Error('worldDay 必须是正整数');
+  if (!Number.isSafeInteger(worldDay) || worldDay < 1) throw new Error('worldDay 必须是正安全整数');
   if (!isUsableSimulation(input) || input.seed !== (seed >>> 0)) {
     return createSimulationAtWorldDay(seed, worldDay);
   }
   const currentDay = simulationWorldDay(input);
   if (currentDay > worldDay) return createSimulationAtWorldDay(seed, worldDay);
-  if (currentDay < worldDay) return advanceSimulationWorldDays(input, worldDay - currentDay).state;
+  if (currentDay < worldDay) {
+    const gapDays = worldDay - currentDay;
+    return gapDays > MAX_ADVANCE_DAYS
+      ? createSimulationAtWorldDay(seed, worldDay)
+      : advanceSimulationWorldDays(input, gapDays).state;
+  }
   return cloneSimulationState(input);
 }

@@ -9,7 +9,7 @@ import { config } from './core/config';
 import { startLoop } from './core/loop';
 import { Store } from './core/store';
 import { clearSave, exportSave, lastSavedAt, loadFromLocal, saveToLocal } from './core/save';
-import { defaultState, type ChronicleEntry, type GameState } from './game/state';
+import { createWorldSimulation, defaultState, type ChronicleEntry, type GameState } from './game/state';
 import { levelUp } from './game/stats';
 import { WorldClock } from './world/clock';
 import { GameRuntime } from './systems/runtime';
@@ -20,6 +20,7 @@ import { chat } from './ai/client';
 import { buildNewWorldModal, buildSettingsModal } from './ui/modals';
 import { buildMainShell, type MainShell } from './ui/screens/main';
 import { buildStartScreen } from './ui/screens/start';
+import { pickOfflineTemplateIndices, planOfflineCatchUp, synchronizeSimulationToWorldDay } from './simulation';
 
 const app = document.getElementById('app')!;
 
@@ -52,7 +53,11 @@ startLoop({
 const director = new Director(store, () => rt, (cls, text) => bus.emit('log', { cls, text }));
 
 bus.on('dayBoundary', ({ day }) => {
-  store.set((st) => ({ ...st, world: { ...st.world, day } }));
+  store.set((st) => ({
+    ...st,
+    world: { ...st.world, day },
+    simulation: synchronizeSimulationToWorldDay(st.simulation, st.world.seed, day),
+  }));
   director.runDay(day);
 });
 
@@ -99,44 +104,62 @@ function buildShell(): void {
   app.appendChild(shell.root);
 }
 
-/** 离线快进：闭关修为 + 灵石 + 模板事件编年史（不调用 AI，控制成本）。 */
-function catchUpOffline(): void {
+/**
+ * 离线快进：先更新存档状态，再构建运行时，避免内存角色与 Store 不一致。
+ * 不调用 AI；模板选择、世界模拟和奖励天数都可复现且有硬上限。
+ */
+function catchUpOffline(): string | null {
   const savedAt = lastSavedAt();
-  if (!savedAt) return;
+  if (savedAt === null) return null;
   const dayMs = config.ui.dayLengthMinutes * 60 * 1000;
-  const days = Math.floor((Date.now() - savedAt) / dayMs);
-  if (days < 1) return;
-  const p0 = store.get().player;
-  const xpGain = days * (20 + p0.level * 8);
+  const plan = planOfflineCatchUp(savedAt, Date.now(), dayMs);
+  const days = plan.appliedDays;
+  if (days < 1) return null;
+
+  const before = store.get();
+  const startWorldDay = before.world.day;
+  const xpGain = days * (20 + before.player.level * 8);
   const moneyGain = days * 10;
-  const tpls = config.eventsTemplates.templates;
+  const templates = config.eventsTemplates.templates;
+  const templateIndices = pickOfflineTemplateIndices(
+    before.world.seed,
+    startWorldDay + 1,
+    days,
+    templates.length,
+  );
   const entries: ChronicleEntry[] = [];
-  for (let i = 0; i < Math.min(3, days); i++) {
-    const t = tpls[Math.floor(Math.random() * tpls.length)];
+  templateIndices.forEach((templateIndex, index) => {
+    const template = templates[templateIndex];
+    if (!template) return;
     entries.push({
-      day: store.get().world.day + 1 - days + i,
-      text: t.text,
-      major: t.type === 'beast_tide',
+      day: startWorldDay + 1 + index,
+      text: template.text,
+      major: template.type === 'beast_tide',
     });
-  }
-  store.set((st) => ({
-    ...st,
-    player: {
-      ...levelUp({ ...st.player, xp: st.player.xp + xpGain }, () => {}),
-      money: st.player.money + moneyGain,
-    },
-    world: {
-      ...st.world,
-      day: st.world.day + days,
-      chronicle: [...st.world.chronicle, ...entries].slice(-60),
-    },
-  }));
-  clock.day = store.get().world.day;
-  bus.emit('log', {
-    cls: 'gold',
-    text: `[闭关] 你闭关 <b class="num">${days}</b> 日：修为 <b class="num">+${xpGain}</b>，灵石 <b class="num">+${moneyGain}</b>（编年史已更新）。`,
   });
-  saveToLocal(store.get());
+
+  store.set((st) => {
+    const nextWorldDay = st.world.day + days;
+    return {
+      ...st,
+      player: {
+        ...levelUp({ ...st.player, xp: st.player.xp + xpGain }, () => {}),
+        money: st.player.money + moneyGain,
+      },
+      world: {
+        ...st.world,
+        day: nextWorldDay,
+        chronicle: [...st.world.chronicle, ...entries].slice(-60),
+      },
+      simulation: synchronizeSimulationToWorldDay(st.simulation, st.world.seed, nextWorldDay),
+    };
+  });
+  clock.day = store.get().world.day;
+
+  const capNotice = plan.capped
+    ? `；离线共折算 ${plan.rawDays} 日，超过安全上限的部分不再结算`
+    : '';
+  return `[闭关] 你闭关 <b class="num">${days}</b> 日：修为 <b class="num">+${xpGain}</b>，灵石 <b class="num">+${moneyGain}</b>（编年史与世界模拟已更新${capNotice}）。`;
 }
 
 function createWorld(name: string, seed: number, useAi: boolean): void {
@@ -157,6 +180,7 @@ function createWorld(name: string, seed: number, useAi: boolean): void {
       eventCooldowns: {},
       realmEntered: false,
     },
+    simulation: createWorldSimulation(seed, 1),
   }));
   clock.day = 1;
   buildShell();
@@ -199,16 +223,16 @@ function createWorld(name: string, seed: number, useAi: boolean): void {
         });
       });
   }
-  catchUpOffline();
 }
 
 function continueGame(): void {
+  const offlineMessage = catchUpOffline();
   buildShell();
   bus.emit('log', {
     cls: 'sys',
     text: `[系统] 欢迎回来，<b>${store.get().world.name}</b> 的第 ${store.get().world.day} 日。`,
   });
-  catchUpOffline();
+  if (offlineMessage) bus.emit('log', { cls: 'gold', text: offlineMessage });
 }
 
 const newWorldModal = buildNewWorldModal(createWorld);

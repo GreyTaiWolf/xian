@@ -10,10 +10,12 @@ import {
   migrateV5toV6,
   migrateV6toV7,
   migrateV7toV8,
+  migrateV8toV9,
+  normalizeV9State,
 } from '../game/state';
 
 export const SAVE_KEY = 'cangming-save';
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 interface Envelope {
   version: number;
@@ -30,6 +32,7 @@ const migrations: Record<number, (data: unknown) => unknown> = {
   5: (d) => migrateV5toV6(d as GameState),
   6: (d) => migrateV6toV7(d as GameState),
   7: (d) => migrateV7toV8(d as GameState),
+  8: (d) => migrateV8toV9(d as GameState),
 };
 
 /** 上次存档时间戳（离线快进用）。 */
@@ -38,22 +41,23 @@ export function lastSavedAt(): number | null {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const env = JSON.parse(raw) as Envelope;
-    return typeof env.savedAt === 'number' ? env.savedAt : null;
+    return Number.isFinite(env.savedAt) && env.savedAt >= 0 ? env.savedAt : null;
   } catch {
     return null;
   }
 }
 
-function migrateToCurrent(version: number, data: unknown): unknown | null {
-  let v = version;
-  let d = data;
-  while (v < SAVE_VERSION) {
-    const fn = migrations[v];
-    if (!fn) return null; // 跨版本无法迁移 → 视为无效存档
-    d = fn(d);
-    v += 1;
+function migrateToCurrent(version: number, data: unknown): GameState | null {
+  if (!Number.isInteger(version) || version < 1 || version > SAVE_VERSION || !data) return null;
+  let currentVersion = version;
+  let currentData = data;
+  while (currentVersion < SAVE_VERSION) {
+    const migrate = migrations[currentVersion];
+    if (!migrate) return null;
+    currentData = migrate(currentData);
+    currentVersion += 1;
   }
-  return d;
+  return normalizeV9State(currentData as GameState);
 }
 
 export function saveToLocal(state: GameState): void {
@@ -66,9 +70,7 @@ export function loadFromLocal(): GameState | null {
   if (!raw) return null;
   try {
     const env = JSON.parse(raw) as Envelope;
-    if (typeof env.version !== 'number' || !env.data) return null;
-    const data = migrateToCurrent(env.version, env.data);
-    return data ? (data as GameState) : null;
+    return migrateToCurrent(env.version, env.data);
   } catch {
     return null;
   }
@@ -93,9 +95,7 @@ export function exportSave(state: GameState): void {
 export async function importSave(file: File): Promise<GameState | null> {
   try {
     const env = JSON.parse(await file.text()) as Envelope;
-    if (!env?.data || typeof env.version !== 'number') return null;
-    const data = migrateToCurrent(env.version, env.data);
-    return data ? (data as GameState) : null;
+    return migrateToCurrent(env.version, env.data);
   } catch {
     return null;
   }
