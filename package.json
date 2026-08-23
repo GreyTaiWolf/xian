@@ -7,7 +7,8 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build",
-    "selftest": "vite build --config vite.selftest.config.ts && node dist-test/selftest.mjs",
+    "selftest": "vite build --config vite.selftest.config.ts && node dist-test/selftest.mjs && vite build --config vite.worldsim.config.ts && node dist-worldsim/worldsim-selftest.mjs",
+    "worldsim:selftest": "vite build --config vite.worldsim.config.ts && node dist-worldsim/worldsim-selftest.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {
