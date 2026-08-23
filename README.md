@@ -2,12 +2,26 @@
 
 AI 天道导演 × 确定性刷宝修真世界。**代码是物理法则，AI 是天道。**
 
+当前工程正在扩展为：
+
+> **网游式角色成长、刷宝、副本、势力与社交体验 + 可持续运行的 AI 动态世界。**
+
+像素/几何地图与文字 UI 负责表现；人口、生态、市场、势力、NPC 知识和世界历史由确定性规则维护。AI 只能提出受限候选，不能直接改数值或存档。
+
 ## 运行
 
 ```bash
 npm.cmd install          # 安装依赖（PowerShell 下用 npm.cmd 以绕过脚本策略）
 npm.cmd run dev          # 开发服务器 → http://localhost:5173
+npm.cmd run typecheck    # TypeScript 严格检查
+npm.cmd run selftest     # 原玩法回归 + 动态世界内核自测
 npm.cmd run build        # 类型检查 + 产物构建
+```
+
+只运行动态世界内核测试：
+
+```bash
+npm.cmd run worldsim:selftest
 ```
 
 ## 文档
@@ -17,18 +31,24 @@ npm.cmd run build        # 类型检查 + 产物构建
 | `docs/game-design.md` | 总体设计（AI/代码分工、地图生成、天道机制） |
 | `docs/phases.md` | P0~M4 分阶段内容设计 |
 | `docs/ui-design.md` | UI 规范（调色板/布局/组件/交互） |
+| `docs/ai-world-simulation.md` | AI 动态世界架构、数据模型、Tick、接入计划 |
+| `docs/ai-prompt-contracts.md` | 游戏内 AI 提示词契约与结构化输出边界 |
 | `ui/prototype.html` | 静态原型（UI 视觉基准，双击可预览） |
 
 ## 目录结构
 
-```
+```text
 src/
-  core/     框架核心：主循环、事件总线、状态容器、存档、RNG、配置表
-  game/     游戏状态模型（可存档数据的类型定义）
-  world/    世界层：世界时钟（→ 天道 AI 的节拍）
-  render/   渲染层：Canvas 渲染器、摄像机、地形预览
-  ui/       界面层：主题、DOM 工具、面板管理、快捷键、弹层、屏幕与面板
-  config/   配置表 JSON（数值驱动，改表不改码）
+  core/         框架核心：主循环、事件总线、状态容器、存档、RNG、配置表
+  game/         现有角色、装备、任务与可存档数据
+  simulation/   动态世界内核：经济、生态、势力、事件日志、AI 安全门
+  world/        世界层：世界时钟、程序化格子世界
+  render/       渲染层：Canvas 渲染器、摄像机、地形预览
+  ui/           界面层：主题、面板、弹层、屏幕
+  config/       配置表 JSON（数值驱动，改表不改码）
+scripts/
+  selftest.ts
+  worldsim-selftest.ts
 ```
 
 ## 阶段状态
@@ -41,3 +61,7 @@ src/
 - [x] 借鉴改造（9 档品级+词条 / 地点行动列表 / 境界小阶段+心境悟性 / 文档纪律）
 - [x] M4 打磨（动效/音效/成就/世界Boss首杀/新手引导/性能）
 - [x] 借鉴二轮（行路异闻两选一+因果链 / 主线阶段卡 CTA）
+- [x] WS-P0 动态世界内核（确定性 Tick / 经济生态 / 事件日志 / AI 安全门 / 19 项断言）
+- [ ] WS-P1 接入主存档、离线快进与现有运行时
+- [ ] WS-P2 城镇市场、怪物迁徙、动态任务与世界新闻 UI
+- [ ] WS-P3 重要 NPC 关系、知识、记忆与自然对话闭环
