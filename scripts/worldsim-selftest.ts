@@ -3,6 +3,11 @@ import {
   buildNpcDialogueAiContext,
   buildWorldEventAiContext,
   createInitialWorldSimulation,
+  createSimulationAtWorldDay,
+  pickOfflineTemplateIndices,
+  planOfflineCatchUp,
+  simulationWorldDay,
+  synchronizeSimulationToWorldDay,
   validateAiCommand,
   validateSimulationInvariants,
   type AiCommandContext,
@@ -117,5 +122,28 @@ const rejectedRelationshipBurst = validateAiCommand(
   initialA,
 );
 assert(!rejectedRelationshipBurst.ok, 'AI 不得一次大幅修改关系');
+
+const migratedDaySeven = createSimulationAtWorldDay(882345, 7);
+assert(simulationWorldDay(migratedDaySeven) === 7, '模拟世界必须能确定性快进到旧存档世界日');
+
+const synchronizedForward = synchronizeSimulationToWorldDay(migratedDaySeven, 882345, 12);
+assert(simulationWorldDay(synchronizedForward) === 12, '落后的模拟世界必须只向前同步');
+
+const synchronizedNewSeed = synchronizeSimulationToWorldDay(migratedDaySeven, 999, 4);
+assert(
+  synchronizedNewSeed.seed === 999 && simulationWorldDay(synchronizedNewSeed) === 4,
+  '世界种子变化时必须重建模拟',
+);
+
+const offlinePlan = planOfflineCatchUp(0, 10_000, 1_000, 7);
+assert(
+  offlinePlan.rawDays === 10 && offlinePlan.appliedDays === 7 && offlinePlan.capped,
+  '离线快进必须计算原始天数并应用硬上限',
+);
+
+const offlinePicksA = pickOfflineTemplateIndices(882345, 30, 12, 6);
+const offlinePicksB = pickOfflineTemplateIndices(882345, 30, 12, 6);
+assert(stableJson(offlinePicksA) === stableJson(offlinePicksB), '离线编年史模板选择必须可复现');
+assert(offlinePicksA.every((index) => index >= 0 && index < 6), '离线模板索引必须保持在合法范围');
 
 console.log(`AI 动态世界模拟自测通过：${passed} 项断言。`);
