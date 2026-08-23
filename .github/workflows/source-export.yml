@@ -1,22 +1,23 @@
 name: Temporary P1 selftest patch
 
 on:
-  push:
-    branches: ["feat/ai-world-sim-p1"]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]'
+    if: github.head_ref == 'feat/ai-world-sim-p1' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout branch
+      - name: Checkout source branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - name: Apply v9 regression-test patch
@@ -93,4 +94,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add scripts/selftest.ts
           git commit -m "[autopatch] WS-P1B：更新 v9 存档回归测试"
-          git push origin HEAD:${{ github.ref_name }}
+          git push origin HEAD:${{ github.head_ref }}

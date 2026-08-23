@@ -50,7 +50,7 @@ export function lastSavedAt(): number | null {
 function migrateToCurrent(version: number, data: unknown): GameState | null {
   if (!Number.isInteger(version) || version < 1 || version > SAVE_VERSION || !data) return null;
   let currentVersion = version;
-  let currentData = data;
+  let currentData: unknown = data;
   while (currentVersion < SAVE_VERSION) {
     const migrate = migrations[currentVersion];
     if (!migrate) return null;
