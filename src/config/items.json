@@ -1,0 +1,36 @@
+{
+  "grades": [
+    { "id": "fan", "name": "凡品", "prefix": "凡", "color": "#C8CDD6", "affixCount": [0, 1], "affixCoeff": 0.75, "priceMult": 1, "tier": 0, "tone": "灰白朴素" },
+    { "id": "liang", "name": "良品", "prefix": "良", "color": "#45C46B", "affixCount": [1, 1], "affixCoeff": 1, "priceMult": 1.8, "tier": 1, "tone": "绿色灵光" },
+    { "id": "jing", "name": "精品", "prefix": "精", "color": "#4E8DFF", "affixCount": [1, 2], "affixCoeff": 1.25, "priceMult": 3.2, "tier": 2, "tone": "蓝色流光" },
+    { "id": "ling", "name": "灵品", "prefix": "灵", "color": "#A56DFF", "affixCount": [2, 3], "affixCoeff": 1.55, "priceMult": 5.5, "tier": 3, "tone": "紫色符纹" },
+    { "id": "xuan", "name": "玄品", "prefix": "玄", "color": "#FF9A3D", "affixCount": [3, 4], "affixCoeff": 1.95, "priceMult": 9, "tier": 4, "tone": "橙色灵焰" },
+    { "id": "di", "name": "地品", "prefix": "地", "color": "#FF5E6A", "affixCount": [4, 5], "affixCoeff": 2.45, "priceMult": 15, "tier": 5, "tone": "赤红地脉光" },
+    { "id": "tian", "name": "天品", "prefix": "天", "color": "#FFD45A", "affixCount": [5, 6], "affixCoeff": 3.1, "priceMult": 24, "tier": 6, "tone": "金色天光" },
+    { "id": "xian", "name": "仙品", "prefix": "仙", "color": "#FFF2B2", "affixCount": [6, 7], "affixCoeff": 3.9, "priceMult": 38, "tier": 7, "tone": "金白流光" },
+    { "id": "shen", "name": "神品", "prefix": "神", "color": "#FFCC88", "affixCount": [7, 8], "affixCoeff": 5, "priceMult": 60, "tier": 8, "tone": "赤金虹光" }
+  ],
+  "items": [
+    { "id": "wood_sword", "name": "木剑", "type": "weapon", "slot": "weapon", "grade": "fan", "char": "剑", "stats": { "atk": 6 }, "price": 20, "desc": "新手木剑，聊胜于无。", "stack": 1 },
+    { "id": "cloth_robe", "name": "布衣", "type": "armor", "slot": "body", "grade": "fan", "char": "衣", "stats": { "def": 3 }, "price": 15, "desc": "粗布道袍。", "stack": 1 },
+    { "id": "cloth_bracer", "name": "布制护腕", "type": "armor", "slot": "hands", "grade": "fan", "char": "腕", "stats": { "def": 2 }, "price": 12, "desc": "缠腕布带，聊以护手。", "stack": 1 },
+    { "id": "leather_cap", "name": "皮帽", "type": "armor", "slot": "head", "grade": "fan", "char": "帽", "stats": { "def": 2 }, "price": 12, "desc": "兽皮缝制的小帽。", "stack": 1 },
+    { "id": "cloth_boots", "name": "布靴", "type": "armor", "slot": "feet", "grade": "fan", "char": "靴", "stats": { "spd": 0.5 }, "price": 12, "desc": "千层底布靴。", "stack": 1 },
+    { "id": "iron_sword", "name": "玄铁剑", "type": "weapon", "slot": "weapon", "grade": "liang", "char": "剑", "stats": { "atk": 14 }, "price": 120, "desc": "玄铁所铸，锋芒初现。", "stack": 1 },
+    { "id": "iron_armor", "name": "玄铁重铠", "type": "armor", "slot": "body", "grade": "liang", "char": "铠", "stats": { "def": 10, "hpMax": 30 }, "price": 180, "desc": "重甲如山，刀剑难伤。", "stack": 1 },
+    { "id": "wind_boots", "name": "疾风靴", "type": "armor", "slot": "feet", "grade": "liang", "char": "靴", "stats": { "spd": 1 }, "price": 150, "desc": "踏风而行，身轻如燕。", "stack": 1 },
+    { "id": "green_sword", "name": "青云剑", "type": "weapon", "slot": "weapon", "grade": "jing", "char": "剑", "stats": { "atk": 26 }, "price": 320, "desc": "青云剑宗内门佩剑，剑身隐有云纹流动。", "stack": 1 },
+    { "id": "spirit_jade", "name": "灵玉坠", "type": "armor", "slot": "trinket1", "grade": "jing", "char": "玉", "stats": { "mpMax": 40 }, "price": 260, "desc": "温润灵玉，凝神聚气。", "stack": 1 },
+    { "id": "war_spear", "name": "破军枪", "type": "weapon", "slot": "weapon", "grade": "ling", "char": "枪", "stats": { "atk": 48 }, "price": 1500, "desc": "北境军神旧物，枪出如龙。", "stack": 1 },
+    { "id": "tian_sword", "name": "太清剑", "type": "weapon", "slot": "weapon", "grade": "tian", "char": "剑", "stats": { "atk": 90 }, "price": 6000, "desc": "太清剑宗镇派之宝，剑出则万法随行。", "stack": 1 },
+    { "id": "xian_sword", "name": "问仙古剑", "type": "weapon", "slot": "weapon", "grade": "xian", "char": "剑", "stats": { "atk": 150 }, "price": 20000, "desc": "上古仙剑，传说持之可问天道。", "stack": 1 },
+    { "id": "hp_pill", "name": "回灵丹", "type": "consumable", "slot": null, "grade": "fan", "char": "丹", "stats": {}, "price": 25, "desc": "服用恢复 80 生命。", "stack": 99, "use": "heal80" },
+    { "id": "mp_pill", "name": "聚气丹", "type": "consumable", "slot": null, "grade": "fan", "char": "丹", "stats": {}, "price": 25, "desc": "服用恢复 40 灵力。", "stack": 99, "use": "mp40" },
+    { "id": "xp_pill", "name": "聚灵丹", "type": "consumable", "slot": null, "grade": "liang", "char": "丹", "stats": {}, "price": 150, "desc": "服用获得 100 修为。", "stack": 99, "use": "xp100" },
+    { "id": "portal_fu", "name": "传送符", "type": "consumable", "slot": null, "grade": "jing", "char": "符", "stats": {}, "price": 60, "desc": "使用后回到最近城镇。", "stack": 99, "use": "portal" },
+    { "id": "wolf_pelt", "name": "兽皮", "type": "material", "slot": null, "grade": "fan", "char": "皮", "stats": {}, "price": 12, "desc": "赤焰狼的皮毛，可出售。", "stack": 99 },
+    { "id": "wolf_core", "name": "妖兽内丹", "type": "material", "slot": null, "grade": "liang", "char": "丹", "stats": {}, "price": 45, "desc": "火系妖兽内丹，可出售。", "stack": 99 },
+    { "id": "iron_ingot", "name": "玄铁锭", "type": "material", "slot": null, "grade": "fan", "char": "锭", "stats": {}, "price": 80, "desc": "炼器材料，可出售。", "stack": 99 },
+    { "id": "treasure_frag", "name": "藏宝图碎片", "type": "material", "slot": null, "grade": "xuan", "char": "图", "stats": {}, "price": 300, "desc": "集齐三片可寻得仙府遗迹。", "stack": 99 }
+  ]
+}

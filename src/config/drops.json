@@ -1,0 +1,41 @@
+{
+  "tables": {
+    "wolf": [
+      { "item": "wolf_pelt", "weight": 45, "min": 1, "max": 2 },
+      { "item": "hp_pill", "weight": 15, "min": 1, "max": 1 },
+      { "item": "cloth_bracer", "weight": 5, "min": 1, "max": 1 },
+      { "item": "cloth_boots", "weight": 4, "min": 1, "max": 1 },
+      { "item": "iron_sword", "weight": 2, "min": 1, "max": 1 }
+    ],
+    "panther": [
+      { "item": "wolf_pelt", "weight": 20, "min": 1, "max": 2 },
+      { "item": "wolf_core", "weight": 25, "min": 1, "max": 1 },
+      { "item": "mp_pill", "weight": 12, "min": 1, "max": 1 },
+      { "item": "wind_boots", "weight": 4, "min": 1, "max": 1 },
+      { "item": "spirit_jade", "weight": 2, "min": 1, "max": 1 }
+    ],
+    "stone": [
+      { "item": "iron_ingot", "weight": 40, "min": 1, "max": 2 },
+      { "item": "iron_armor", "weight": 8, "min": 1, "max": 1 },
+      { "item": "iron_sword", "weight": 8, "min": 1, "max": 1 },
+      { "item": "green_sword", "weight": 3, "min": 1, "max": 1 }
+    ],
+    "boss": [
+      { "item": "iron_ingot", "weight": 30, "min": 2, "max": 4 },
+      { "item": "xp_pill", "weight": 20, "min": 1, "max": 2 },
+      { "item": "green_sword", "weight": 15, "min": 1, "max": 1 },
+      { "item": "war_spear", "weight": 10, "min": 1, "max": 1 },
+      { "item": "treasure_frag", "weight": 8, "min": 1, "max": 1 },
+      { "item": "tian_sword", "weight": 3, "min": 1, "max": 1 },
+      { "item": "xian_sword", "weight": 1, "min": 1, "max": 1 }
+    ],
+    "pity": [
+      { "item": "iron_sword", "weight": 40, "min": 1, "max": 1 },
+      { "item": "wind_boots", "weight": 25, "min": 1, "max": 1 },
+      { "item": "spirit_jade", "weight": 15, "min": 1, "max": 1 },
+      { "item": "green_sword", "weight": 12, "min": 1, "max": 1 },
+      { "item": "war_spear", "weight": 8, "min": 1, "max": 1 },
+      { "item": "tian_sword", "weight": 2, "min": 1, "max": 1 }
+    ]
+  }
+}

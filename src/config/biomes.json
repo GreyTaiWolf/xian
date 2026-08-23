@@ -1,0 +1,12 @@
+{
+  "biomes": [
+    { "id": "deep_water", "name": "深海", "walkable": false, "gMin": 30, "gMax": 44, "ch": "≈" },
+    { "id": "shallow_water", "name": "浅海", "walkable": false, "gMin": 46, "gMax": 58, "ch": "≈" },
+    { "id": "river", "name": "河流", "walkable": false, "gMin": 40, "gMax": 54, "ch": "≈" },
+    { "id": "sand", "name": "沙滩", "walkable": true, "gMin": 90, "gMax": 102, "ch": "∴" },
+    { "id": "grass", "name": "草原", "walkable": true, "gMin": 112, "gMax": 128, "ch": "" },
+    { "id": "forest", "name": "森林", "walkable": true, "gMin": 98, "gMax": 112, "ch": "♣" },
+    { "id": "mountain", "name": "山地", "walkable": false, "gMin": 180, "gMax": 212, "ch": "∧" },
+    { "id": "snow", "name": "雪峰", "walkable": false, "gMin": 224, "gMax": 238, "ch": "*" }
+  ]
+}

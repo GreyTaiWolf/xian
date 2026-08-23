@@ -1,0 +1,16 @@
+{
+  "achievements": [
+    { "id": "first_kill", "name": "初露锋芒", "desc": "斩杀第一只妖兽", "cond": { "type": "kills", "value": 1 } },
+    { "id": "kills_100", "name": "百兽斩", "desc": "累计击杀 100 只妖兽", "cond": { "type": "kills", "value": 100 } },
+    { "id": "kills_500", "name": "妖兽克星", "desc": "累计击杀 500 只妖兽", "cond": { "type": "kills", "value": 500 } },
+    { "id": "level_10", "name": "筑基有成", "desc": "修为晋入筑基", "cond": { "type": "level", "value": 10 } },
+    { "id": "level_19", "name": "金丹真人", "desc": "修为晋入金丹", "cond": { "type": "level", "value": 19 } },
+    { "id": "level_46", "name": "渡劫大能", "desc": "修为晋入渡劫", "cond": { "type": "level", "value": 46 } },
+    { "id": "money_10000", "name": "万贯家财", "desc": "积蓄 10000 灵石", "cond": { "type": "money", "value": 10000 } },
+    { "id": "boss_kill", "name": "狼王克星", "desc": "斩杀赤焰狼王", "cond": { "type": "boss", "value": 1 } },
+    { "id": "quests_all", "name": "初试牛刀", "desc": "完成全部任务", "cond": { "type": "quests", "value": 3 } },
+    { "id": "day_10", "name": "十日之游", "desc": "游历满 10 日", "cond": { "type": "day", "value": 10 } },
+    { "id": "day_30", "name": "月余之游", "desc": "游历满 30 日", "cond": { "type": "day", "value": 30 } },
+    { "id": "ascend_1", "name": "转世重修", "desc": "飞升转世一次", "cond": { "type": "ascend", "value": 1 } }
+  ]
+}

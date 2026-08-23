@@ -1,0 +1,11 @@
+{
+  "chunkSize": 64,
+  "continent": { "octaves": 4, "scale": 0.012, "threshold": 0.5 },
+  "height": { "octaves": 5, "scale": 0.055 },
+  "moisture": { "octaves": 4, "scale": 0.042 },
+  "river": { "octaves": 3, "scale": 0.018, "threshold": 0.965 },
+  "sandMaxH": 0.42,
+  "grassMaxH": 0.72,
+  "mountainMaxH": 0.85,
+  "forestMinMoisture": 0.45
+}

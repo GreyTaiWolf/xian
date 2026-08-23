@@ -1,0 +1,8 @@
+{
+  "pois": [
+    { "id": "town", "kind": "town", "name": "霜落城", "char": "▣", "color": "#c9a45c", "x": 5, "y": -2, "carve": 3 },
+    { "id": "sect", "kind": "sect", "name": "青云剑宗", "char": "▲", "color": "#58d68d", "x": -4, "y": 7, "carve": 2.5 },
+    { "id": "realm", "kind": "realm", "name": "灵雾秘境", "char": "✦", "color": "#b58cff", "x": 25, "y": 18, "carve": 2 },
+    { "id": "boss", "kind": "boss", "name": "狼王巢穴", "char": "☠", "color": "#ff4d4d", "x": 85, "y": 75, "carve": 2 }
+  ]
+}

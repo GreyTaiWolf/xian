@@ -1,0 +1,28 @@
+{
+  "recipes": [
+    {
+      "id": "craft_hp_pill",
+      "name": "回灵丹",
+      "output": "hp_pill",
+      "outputCount": 2,
+      "materials": [{ "item": "wolf_pelt", "count": 3 }],
+      "money": 30
+    },
+    {
+      "id": "craft_iron_sword",
+      "name": "玄铁剑",
+      "output": "iron_sword",
+      "outputCount": 1,
+      "materials": [{ "item": "iron_ingot", "count": 3 }],
+      "money": 100
+    },
+    {
+      "id": "craft_portal_fu",
+      "name": "传送符",
+      "output": "portal_fu",
+      "outputCount": 1,
+      "materials": [{ "item": "wolf_pelt", "count": 2 }],
+      "money": 20
+    }
+  ]
+}

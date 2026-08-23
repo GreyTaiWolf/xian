@@ -1,0 +1,28 @@
+{
+  "quests": [
+    {
+      "id": "main_wolves",
+      "type": "main",
+      "name": "初入沧溟",
+      "desc": "击杀赤焰狼，向霜落城卫队长证明你的实力。",
+      "target": { "kind": "kill", "monster": "wolf", "count": 10 },
+      "reward": { "xp": 300, "money": 200, "contribution": 30 }
+    },
+    {
+      "id": "daily_any",
+      "type": "daily",
+      "name": "日常 · 清剿妖兽",
+      "desc": "击杀任意妖兽，护卫沧溟安宁。",
+      "target": { "kind": "kill", "monster": "any", "count": 20 },
+      "reward": { "xp": 400, "money": 150, "contribution": 20 }
+    },
+    {
+      "id": "main_elites",
+      "type": "main",
+      "name": "猎杀精英",
+      "desc": "石甲兽盘踞山野，取其首级。",
+      "target": { "kind": "kill", "monster": "stone_beast", "count": 3 },
+      "reward": { "xp": 500, "money": 300, "contribution": 50 }
+    }
+  ]
+}

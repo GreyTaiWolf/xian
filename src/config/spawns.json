@@ -1,0 +1,13 @@
+{
+  "updateIntervalMs": 3000,
+  "spawnRadius": 30,
+  "bandMin": 8,
+  "bandMax": 22,
+  "levelScaleDist": 25,
+  "powerCap": 3,
+  "perType": [
+    { "monster": "wolf", "count": 14 },
+    { "monster": "panther", "count": 10 },
+    { "monster": "stone_beast", "count": 6 }
+  ]
+}

@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仙 —— UI 原型 v0.1</title>
+<style>
+/* ============ 主题变量（与 docs/ui-design.md §2 一致） ============ */
+:root{
+  --bg:#121216; --panel:#1d1d23; --panel2:#25252d; --line:#3a3a45;
+  --tx:#e8e8ec; --tx2:#9a9aa4; --tx3:#5f5f6a;
+  --acc:#58c4ff; --good:#58d68d; --bad:#ff5a5a; --gold:#c9a45c; --warn:#ffd24d;
+  --r-white:#d8d8dc; --r-green:#58d68d; --r-blue:#58a6ff;
+  --r-purple:#b58cff; --r-orange:#ff9a3c; --r-red:#ff4d4d;
+  --mono:Consolas,"Cascadia Mono","JetBrains Mono",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font:13px/1.5 "Microsoft YaHei","PingFang SC",system-ui,sans-serif;overflow:hidden}
+.num,.mono{font-family:var(--mono)}
+.hidden{display:none!important}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{background:var(--panel2);border:1px solid var(--line);color:var(--tx);padding:6px 8px;border-radius:4px;font:inherit;width:100%}
+input[type=checkbox]{width:auto;accent-color:var(--acc)}
+input[type=range]{padding:0;accent-color:var(--acc)}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ============ 通用组件 ============ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 14px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--tx3);background:#2d2d36}
+.btn.primary{border-color:var(--acc);color:var(--acc)}
+.btn.gold{border-color:var(--gold);color:var(--gold)}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+.btn.sm{padding:4px 10px;font-size:12px}
+.bar{height:8px;border-radius:4px;background:#2a2a33;overflow:hidden;flex:1}
+.bar i{display:block;height:100%;border-radius:4px}
+.sec-title{font-size:12px;color:var(--tx3);letter-spacing:2px;margin:14px 0 8px}
+.sec-title:first-child{margin-top:0}
+.row-between{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.row{display:flex;gap:8px}
+.hint-line{margin-top:10px;font-size:11.5px;color:var(--tx3)}
+/* 稀有度文字色 */
+.rw{color:var(--r-white)} .rg{color:var(--r-green)} .rb{color:var(--r-blue)}
+.rp{color:var(--r-purple)} .ro{color:var(--r-orange)} .rr{color:var(--r-red)}
+.goldc{color:var(--gold)}
+
+/* ============ 标题界面 ============ */
+#start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:50;
+  background:radial-gradient(1100px 680px at 50% 18%,#1d1d28,var(--bg) 72%)}
+#start .card{text-align:center;position:relative;z-index:2}
+#start h1{font-size:46px;letter-spacing:16px;font-weight:600;text-indent:16px}
+#start h1 .geom{color:var(--acc)}
+#start .sub{color:var(--tx2);margin:12px 0 36px;letter-spacing:3px;font-size:14px}
+#start .btns{display:flex;flex-direction:column;gap:12px;width:250px;margin:0 auto}
+#start .ver{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:var(--tx3);font-size:12px}
+.shapes div{position:absolute;opacity:.14;pointer-events:none}
+.sq{width:24px;height:24px;border:1px solid var(--acc)}
+.cir{border-radius:50%;border:1px solid var(--gold)}
+.tri{width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:20px solid var(--bad)}
+
+/* ============ 主游戏布局 ============ */
+#game{position:fixed;inset:0;display:flex;flex-direction:column;z-index:10}
+#topbar{height:46px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 14px;background:var(--panel);flex:0 0 auto}
+#topbar .world{font-weight:600;letter-spacing:1px}
+#topbar .day{color:var(--tx2);font-size:12px}
+#topbar .ai-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--tx2);border:1px solid var(--line);border-radius:99px;padding:2px 10px}
+#topbar .ai-chip i{width:6px;height:6px;border-radius:50%;background:var(--good)}
+#topbar .spacer{flex:1}
+#mid{flex:1;display:flex;min-height:0}
+
+/* 左：角色卡 */
+#sideL{width:232px;border-right:1px solid var(--line);background:var(--panel);padding:12px;overflow-y:auto;flex:0 0 auto}
+.avatar{width:46px;height:46px;border-radius:50%;margin:2px auto 8px;position:relative;
+  background:radial-gradient(circle at 35% 30%,#8ad4ff,var(--acc) 70%);
+  border:2px solid rgba(255,255,255,.85);box-shadow:0 0 14px rgba(88,196,255,.4)}
+.avatar .lvl{position:absolute;right:-5px;bottom:-4px;background:var(--gold);color:#1a1a1a;font:700 11px var(--mono);padding:1px 5px;border-radius:99px}
+.pname{text-align:center;font-weight:600}
+.ptitle{text-align:center;color:var(--gold);font-size:12px;margin-bottom:10px}
+.stat-line{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px}
+.stat-line .tag{width:30px;color:var(--tx2);flex:0 0 auto}
+.stat-line .val{flex:1;text-align:right;font-size:11.5px}
+.power{text-align:center;margin-top:10px;color:var(--tx2);font-size:12px}
+.power b{color:var(--tx);font-size:16px;font-family:var(--mono)}
+
+/* 中：地图视口 */
+#center{flex:1;display:flex;flex-direction:column;min-width:0}
+#view{flex:1;position:relative;overflow:hidden;background:#0c0c10;min-height:0}
+#terrain{display:grid;grid-template-columns:repeat(24,1fr);grid-template-rows:repeat(14,1fr);position:absolute;inset:0}
+.tile{display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,.5);text-shadow:0 1px 2px rgba(0,0,0,.6)}
+#entities{position:absolute;inset:0;pointer-events:none}
+.ent{position:absolute;transform:translate(-50%,-50%)}
+.ent .marker{display:block}
+.player{width:15px;height:15px;border-radius:50%;background:var(--acc);border:2px solid rgba(255,255,255,.85);box-shadow:0 0 12px var(--acc)}
+.mob{width:13px;height:13px;clip-path:polygon(50% 0,100% 100%,0 100%);background:var(--bad)}
+.mob .hpbar{position:absolute;left:50%;top:-9px;transform:translateX(-50%);width:24px;height:3px;background:#2a2a33;border-radius:2px}
+.mob .hpbar i{display:block;height:100%;background:var(--bad);border-radius:2px}
+.loot{width:11px;height:11px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--r-purple)}
+.ent.beam{transform:translate(-50%,-100%);width:4px;height:30px;left:64.6%;top:60.7%;
+  background:linear-gradient(to top,rgba(181,140,255,.55),rgba(181,140,255,0));animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:.9}}
+.moblabel{transform:translate(-50%,-190%);color:var(--bad);font-size:11px;text-shadow:0 1px 2px #000;white-space:nowrap}
+.plabel{transform:translate(-50%,-210%);color:var(--acc);font-size:11px;text-shadow:0 1px 2px #000;white-space:nowrap}
+.townlabel{transform:translate(-50%,-150%);color:var(--tx);font-size:11px;text-shadow:0 1px 2px #000;white-space:nowrap}
+#minimap{position:absolute;top:10px;right:10px;width:134px;background:rgba(10,10,14,.88);border:1px solid var(--line);border-radius:6px;padding:6px;z-index:5}
+#minimap .title{font-size:10px;color:var(--tx3);letter-spacing:2px;margin-bottom:4px}
+#minimap .box{position:relative}
+#mmGrid{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(10,8px);gap:1px}
+#mmGrid .cell{border-radius:1px}
+.mm-dot{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--acc);transform:translate(-50%,-50%);box-shadow:0 0 4px var(--acc)}
+.mm-mark{position:absolute;transform:translate(-50%,-50%);font-size:9px;line-height:1}
+#hint{position:absolute;left:10px;bottom:10px;color:var(--tx3);font-size:12px}
+
+/* 底部：日志 + 操作 */
+#bottom{height:148px;border-top:1px solid var(--line);background:var(--panel);display:flex;flex:0 0 auto}
+#log{flex:1;overflow-y:auto;padding:10px 12px;font-size:12.5px;line-height:1.75}
+.log-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-line.c{color:var(--tx2)}
+.log-line.gold{color:var(--gold)}
+.log-line.sys{color:var(--acc)}
+.log-line.badl{color:var(--bad)}
+.log-line.lootL{color:var(--r-purple)}
+.log-line .crit{color:var(--warn)}
+#actions{width:150px;border-left:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
+#actions .hint-line{margin:0;text-align:center}
+
+/* 右：面板区 */
+#sideR{width:400px;border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;flex:0 0 auto}
+#tabbar{display:flex;border-bottom:1px solid var(--line);flex:0 0 auto}
+.tab{flex:1;padding:9px 0;font-size:12.5px;color:var(--tx2);border-bottom:2px solid transparent;text-align:center;transition:.15s}
+.tab:hover{color:var(--tx)}
+.tab.on{color:var(--tx);border-bottom-color:var(--acc)}
+#panels{flex:1;overflow:hidden;position:relative;min-height:0}
+.panel{position:absolute;inset:0;overflow-y:auto;padding:12px}
+
+/* 背包 */
+.inv-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.cell{position:relative;aspect-ratio:1;background:var(--panel2);border:1px solid var(--line);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.cell .cnt{position:absolute;right:2px;bottom:0;font-size:10px;color:var(--tx2);font-family:var(--mono)}
+.cell.empty{opacity:.5;border-style:dashed}
+.cell.bd-rw{border-color:var(--r-white)} .cell.bd-rg{border-color:var(--r-green)} .cell.bd-rb{border-color:var(--r-blue)}
+.cell.bd-rp{border-color:var(--r-purple)} .cell.bd-ro{border-color:var(--r-orange)} .cell.bd-rr{border-color:var(--r-red)}
+.info{padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);min-height:112px;margin-top:10px}
+.info h4{margin-bottom:5px;font-weight:600;font-size:14px}
+.info .ln{display:flex;justify-content:space-between;font-size:12.5px;padding:1.5px 0}
+.info .ln .k{color:var(--tx3)}
+
+/* 装备 */
+.equip-wrap{display:flex;gap:12px}
+.fig{position:relative;width:146px;height:196px;margin:6px auto 0;flex:0 0 auto}
+.fig .head{position:absolute;left:57px;top:8px;width:32px;height:32px;border-radius:50%;background:var(--panel2);border:1px solid var(--acc)}
+.fig .body{position:absolute;left:53px;top:44px;width:40px;height:62px;background:var(--panel2);border:1px solid var(--line)}
+.fig .limb{position:absolute;width:14px;height:44px;background:var(--panel2);border:1px solid var(--line)}
+.slot{position:absolute;width:34px;height:34px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.slot .sl{position:absolute;top:-14px;font-size:10px;color:var(--tx3);white-space:nowrap}
+.slot.bd-rw{border-color:var(--r-white)} .slot.bd-rg{border-color:var(--r-green)} .slot.bd-rb{border-color:var(--r-blue)}
+.slot.bd-rp{border-color:var(--r-purple)} .slot.bd-ro{border-color:var(--r-orange)} .slot.bd-rr{border-color:var(--r-red)}
+.equip-info{flex:1;min-width:0}
+
+/* 地图面板 */
+.mapbox{position:relative;height:282px;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+#mapGrid{display:grid;grid-template-columns:repeat(16,1fr);grid-template-rows:repeat(12,1fr);position:absolute;inset:0}
+.farea{position:absolute;border:1px solid;background:transparent;font-size:11px;text-align:center;padding-top:2px;opacity:.9}
+.mlabel{position:absolute;font-size:11px;color:var(--tx);text-shadow:0 1px 2px #000;white-space:nowrap;transform:translate(-50%,-50%)}
+.legend{margin-top:10px;font-size:12px;color:var(--tx2);line-height:1.9}
+
+/* 宗门 / 任务 卡片 */
+.card{border:1px solid var(--line);border-radius:6px;padding:10px;margin-bottom:8px;background:var(--panel2)}
+.card h4{font-size:13px;margin-bottom:2px}
+.card .desc{color:var(--tx2);font-size:12px;margin:3px 0 8px}
+.card .bar-row{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--tx2);margin:5px 0}
+.card .bar-row .tag{width:34px;flex:0 0 auto}
+.card .bar-row .num{flex:0 0 auto;width:76px;text-align:right}
+.badge{font-size:10.5px;border:1px solid;border-radius:99px;padding:0 7px;margin-left:6px;vertical-align:2px}
+.badge.good{border-color:var(--good);color:var(--good)}
+.badge.bad{border-color:var(--bad);color:var(--bad)}
+.badge.mid{border-color:var(--gold);color:var(--gold)}
+
+/* 商店 */
+.srow{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;background:var(--panel2)}
+.srow .name{flex:1}
+.srow .price{color:var(--gold);font-family:var(--mono);font-size:12px}
+
+/* 编年史 */
+.entry{border-left:2px solid var(--line);padding:2px 0 12px 12px;margin-left:6px}
+.entry:last-child{padding-bottom:2px}
+.entry .day{color:var(--gold);font-size:12px;margin-bottom:2px;font-family:var(--mono)}
+.entry p{font-size:12.5px;color:var(--tx2)}
+.entry.major{border-left-color:var(--bad)}
+
+/* 弹层 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{width:430px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.modal h3{margin-bottom:14px;letter-spacing:1px}
+.field{margin-bottom:12px}
+.field>label{display:block;font-size:12px;color:var(--tx2);margin-bottom:5px}
+.field .sub{font-size:11px;color:var(--tx3);margin-top:4px}
+.check{display:flex;align-items:center;gap:8px}
+.check label{margin:0!important}
+.modal .row .btn{flex:1}
+</style>
+</head>
+<body>
+
+<!-- ================= 标题界面 ================= -->
+<div id="start">
+  <div class="shapes">
+    <div class="sq" style="left:12%;top:20%"></div>
+    <div class="cir" style="left:84%;top:16%;width:30px;height:30px"></div>
+    <div class="tri" style="left:78%;top:74%"></div>
+    <div class="sq" style="left:88%;top:62%;transform:rotate(45deg)"></div>
+    <div class="cir" style="left:16%;top:70%;width:16px;height:16px"></div>
+    <div class="tri" style="left:26%;top:12%;transform:rotate(160deg)"></div>
+    <div class="sq" style="left:60%;top:86%;width:14px;height:14px"></div>
+    <div class="cir" style="left:8%;top:42%;width:22px;height:22px"></div>
+  </div>
+  <div class="card">
+    <h1><span class="geom">▣</span> 仙</h1>
+    <div class="sub">AI 天道导演 · 灰度几何世界 · 刷宝修真</div>
+    <div class="btns">
+      <button class="btn primary" onclick="openModal('mNew')">新建世界</button>
+      <button class="btn" onclick="createWorld()">继续游戏</button>
+      <button class="btn" onclick="openModal('mSettings')">设置</button>
+    </div>
+  </div>
+  <div class="ver">UI 原型 v0.1 · 单机网页版 · 全部界面为静态演示</div>
+</div>
+
+<!-- ================= 主游戏界面 ================= -->
+<div id="game" class="hidden">
+
+  <!-- 顶栏 -->
+  <div id="topbar">
+    <span class="world" id="worldNameTop">沧溟界</span>
+    <span class="day">第 <span class="num" id="dayTop">37</span> 日 · 晴</span>
+    <span class="ai-chip"><i></i>天道 AI 在线</span>
+    <span class="spacer"></span>
+    <span class="goldc num" id="money">1280</span><span class="goldc" style="font-size:12px">灵石</span>
+    <span style="color:var(--tx2);font-size:12px">境界</span><span class="goldc" style="font-size:12px">筑基 · 三层</span>
+    <button class="btn sm" onclick="openModal('mSettings')">设置</button>
+  </div>
+
+  <div id="mid">
+    <!-- 左：角色卡 -->
+    <div id="sideL">
+      <div class="avatar"><div class="lvl">17</div></div>
+      <div class="pname">林道玄</div>
+      <div class="ptitle">散修 · 筑基三层</div>
+      <div class="stat-line"><span class="tag">生命</span><div class="bar"><i style="width:100%;background:var(--bad)"></i></div><span class="val num">1280/1280</span></div>
+      <div class="stat-line"><span class="tag">灵力</span><div class="bar"><i style="width:100%;background:#58a6ff"></i></div><span class="val num">560/560</span></div>
+      <div class="stat-line"><span class="tag">经验</span><div class="bar"><i style="width:72%;background:var(--gold)"></i></div><span class="val num">72%</span></div>
+      <div class="stat-line"><span class="tag">攻击</span><span class="spacer" style="flex:1"></span><span class="num">186</span><span class="rb num" style="width:34px;text-align:right">+45</span></div>
+      <div class="stat-line"><span class="tag">防御</span><span class="spacer" style="flex:1"></span><span class="num">120</span><span class="rg num" style="width:34px;text-align:right">+22</span></div>
+      <div class="stat-line"><span class="tag">速度</span><span class="spacer" style="flex:1"></span><span class="num">32</span><span style="width:34px"></span></div>
+      <div class="stat-line"><span class="tag">暴击</span><span class="spacer" style="flex:1"></span><span class="num">18%</span><span style="width:34px"></span></div>
+      <div class="stat-line"><span class="tag">幸运</span><span class="spacer" style="flex:1"></span><span class="num">12</span><span style="width:34px"></span></div>
+      <div class="power">战力 <b class="goldc">1240</b></div>
+    </div>
+
+    <!-- 中：地图视口 -->
+    <div id="center">
+      <div id="view">
+        <div id="terrain"></div>
+        <div id="entities">
+          <!-- 城镇 -->
+          <div class="ent" style="left:43.75%;top:32.1%"><span style="color:var(--gold);font-size:17px;text-shadow:0 0 8px rgba(201,164,92,.6)">▣</span></div>
+          <div class="ent townlabel" style="left:43.75%;top:32.1%">霜落城</div>
+          <!-- 宗门 -->
+          <div class="ent" style="left:85.4%;top:25%"><span style="color:var(--good);font-size:15px;text-shadow:0 0 8px rgba(88,214,141,.5)">▲</span></div>
+          <div class="ent townlabel" style="left:85.4%;top:25%">青云剑宗</div>
+          <!-- 玩家 -->
+          <div class="ent" style="left:22.9%;top:46.4%"><span class="player" style="display:block"></span></div>
+          <div class="ent plabel" style="left:22.9%;top:46.4%">你</div>
+          <!-- 怪物 -->
+          <div class="ent mob" style="left:60.4%;top:67.9%"><div class="hpbar"><i style="width:62%"></i></div></div>
+          <div class="ent moblabel" style="left:60.4%;top:67.9%">赤焰狼 Lv.12</div>
+          <div class="ent mob" style="left:77.1%;top:39.3%"><div class="hpbar"><i style="width:92%"></i></div></div>
+          <div class="ent moblabel" style="left:77.1%;top:39.3%">幽冥豹 Lv.15</div>
+          <!-- 掉落 + 光柱 -->
+          <div class="ent beam"></div>
+          <div class="ent loot" style="left:64.6%;top:60.7%"></div>
+          <div class="ent" style="left:64.6%;top:60.7%"><span class="rp" style="font-size:11px;position:absolute;top:8px;left:6px;white-space:nowrap;text-shadow:0 1px 2px #000">破军枪</span></div>
+        </div>
+        <div id="hint">WASD / 点击移动 · 空格攻击 · 原型演示</div>
+        <div id="minimap">
+          <div class="title">小地图</div>
+          <div class="box">
+            <div id="mmGrid"></div>
+            <div class="mm-dot" style="left:22.9%;top:46.4%"></div>
+            <div class="mm-mark" style="left:43.75%;top:32.1%;color:var(--gold)">▣</div>
+            <div class="mm-mark" style="left:85.4%;top:25%;color:var(--good)">▲</div>
+          </div>
+        </div>
+      </div>
+      <!-- 底部：日志 + 操作 -->
+      <div id="bottom">
+        <div id="log"></div>
+        <div id="actions">
+          <button class="btn primary" onclick="attack()">攻击</button>
+          <button class="btn" onclick="attackSkill()">御剑术</button>
+          <button class="btn" onclick="pickup()">拾取</button>
+          <div class="hint-line">空格 = 攻击<br>原型演示按钮</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右：面板区 -->
+    <div id="sideR">
+      <div id="tabbar">
+        <button class="tab on" data-tab="inv">背包</button>
+        <button class="tab" data-tab="equip">装备</button>
+        <button class="tab" data-tab="char">角色</button>
+        <button class="tab" data-tab="map">地图</button>
+        <button class="tab" data-tab="sect">宗门</button>
+        <button class="tab" data-tab="shop">商店</button>
+        <button class="tab" data-tab="quest">任务</button>
+        <button class="tab" data-tab="chron">编年史</button>
+      </div>
+      <div id="panels">
+
+        <!-- 背包 -->
+        <div class="panel" id="panel-inv">
+          <div class="row-between">
+            <span>背包</span><span class="num tx2">12 / 32</span>
+          </div>
+          <div class="row" style="margin-bottom:8px">
+            <button class="btn sm" style="flex:1">整理</button>
+            <button class="btn sm danger" style="flex:1">丢弃</button>
+          </div>
+          <div class="inv-grid">
+            <div class="cell bd-rb" data-info="<h4 class='rb'>青云剑</h4><div class='ln'><span class='k'>类型</span><span>武器 · 单手剑</span></div><div class='ln'><span class='k'>品阶</span><span class='rb'>法宝</span></div><div class='ln'><span class='k'>攻击</span><span class='num'>+45</span></div><div class='ln'><span class='k'>词条</span><span class='rg'>剑气 +12%</span></div><div class='ln'><span class='k'>词条</span><span class='rg'>暴击率 +5%</span></div><div class='ln'><span class='k'>描述</span><span>青云剑宗内门佩剑，剑身隐有云纹流动。</span></div><div class='ln'><span class='k'>售价</span><span class='num goldc'>320 灵石</span></div>"><span class="rb">剑</span></div>
+            <div class="cell bd-rp" data-info="<h4 class='rp'>破军枪</h4><div class='ln'><span class='k'>类型</span><span>武器 · 长枪</span></div><div class='ln'><span class='k'>品阶</span><span class='rp'>仙器</span></div><div class='ln'><span class='k'>攻击</span><span class='num'>+88</span></div><div class='ln'><span class='k'>词条</span><span class='rg'>破甲 +18%</span></div><div class='ln'><span class='k'>词条</span><span class='rg'>攻击 +8%</span></div><div class='ln'><span class='k'>词条</span><span class='rg'>攻速 +6%</span></div><div class='ln'><span class='k'>描述</span><span>北境军神旧物，枪出如龙。</span></div><div class='ln'><span class='k'>售价</span><span class='num goldc'>1500 灵石</span></div>"><span class="rp">枪</span></div>
+            <div class="cell bd-rw"><span class="rw">丹</span><div class="cnt">×12</div></div>
+            <div class="cell bd-rb" data-info="<h4 class='rb'>传送符</h4><div class='ln'><span class='k'>类型</span><span>消耗品</span></div><div class='ln'><span class='k'>效果</span><span>回到最近城镇</span></div><div class='ln'><span class='k'>售价</span><span class='num goldc'>60 灵石</span></div>"><span class="rb">符</span><div class="cnt">×5</div></div>
+            <div class="cell bd-rg" data-info="<h4 class='rg'>火灵芝</h4><div class='ln'><span class='k'>类型</span><span>材料 · 炼丹</span></div><div class='ln'><span class='k'>品阶</span><span class='rg'>灵材</span></div><div class='ln'><span class='k'>描述</span><span>生于地火交汇处，聚灵丹主材。</span></div>"><span class="rg">芝</span><div class="cnt">×3</div></div>
+            <div class="cell bd-rw"><span class="rw">皮</span><div class="cnt">×7</div></div>
+            <div class="cell bd-rb" data-info="<h4 class='rb'>灵玉坠</h4><div class='ln'><span class='k'>类型</span><span>饰品</span></div><div class='ln'><span class='k'>品阶</span><span class='rb'>法宝</span></div><div class='ln'><span class='k'>灵力</span><span class='num'>+120</span></div><div class='ln'><span class='k'>词条</span><span class='rg'>灵力回复 +10%</span></div>"><span class="rb">玉</span></div>
+            <div class="cell bd-rw"><span class="rw">锭</span><div class="cnt">×4</div></div>
+            <div class="cell bd-rg" data-info="<h4 class='rg'>聚灵丹</h4><div class='ln'><span class='k'>类型</span><span>丹药</span></div><div class='ln'><span class='k'>效果</span><span>经验 +200</span></div><div class='ln'><span class='k'>售价</span><span class='num goldc'>150 灵石</span></div>"><span class="rg">丹</span><div class="cnt">×2</div></div>
+            <div class="cell bd-ro" data-info="<h4 class='ro'>藏宝图碎片</h4><div class='ln'><span class='k'>类型</span><span>任务物品</span></div><div class='ln'><span class='k'>品阶</span><span class='ro'>神器</span></div><div class='ln'><span class='k'>进度</span><span class='num'>1/3</span></div><div class='ln'><span class='k'>描述</span><span>集齐三片可寻得仙府遗迹。</span></div>"><span class="ro">图</span></div>
+            <div class="cell bd-rb" data-info="<h4 class='rb'>疾风靴</h4><div class='ln'><span class='k'>类型</span><span>防具 · 脚</span></div><div class='ln'><span class='k'>品阶</span><span class='rb'>法宝</span></div><div class='ln'><span class='k'>速度</span><span class='num'>+12</span></div><div class='ln'><span class='k'>词条</span><span class='rg'>闪避 +5%</span></div>"><span class="rb">靴</span></div>
+            <div class="cell bd-rg" data-info="<h4 class='rg'>妖兽内丹</h4><div class='ln'><span class='k'>类型</span><span>材料 · 炼器</span></div><div class='ln'><span class='k'>描述</span><span>赤焰狼体内凝结的火系内丹。</span></div><div class='ln'><span class='k'>售价</span><span class='num goldc'>45 灵石</span></div>"><span class="rg">丹</span></div>
+            <div class="cell bd-rw"><span class="rw">袋</span></div>
+            <div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div>
+          </div>
+          <div class="info" id="itemInfo">
+            <h4 style="color:var(--tx3)">物品信息</h4>
+            <div class="ln"><span class="k">提示</span><span>悬停背包中的物品查看详情</span></div>
+          </div>
+          <div class="hint-line">快捷键 B/C/E/M/G/T/J · Esc 关闭面板</div>
+        </div>
+
+        <!-- 装备 -->
+        <div class="panel hidden" id="panel-equip">
+          <div class="sec-title">装备</div>
+          <div class="equip-wrap">
+            <div class="fig">
+              <div class="head"></div>
+              <div class="body"></div>
+              <div class="limb" style="left:40px;top:48px"></div>
+              <div class="limb" style="left:92px;top:48px"></div>
+              <div class="limb" style="left:50px;top:104px;transform:rotate(8deg)"></div>
+              <div class="limb" style="left:82px;top:104px;transform:rotate(-8deg)"></div>
+              <div class="slot bd-rb" style="left:112px;top:52px" data-info="<h4 class='rb'>青云剑</h4><div class='ln'><span class='k'>攻击</span><span class='num'>+45</span></div><div class='ln'><span class='k'>词条</span><span class='rg'>剑气 +12%</span></div>"><span class="rb">剑</span><span class="sl">武器</span></div>
+              <div class="slot bd-rg" style="left:58px;top:-34px" data-info="<h4 class='rg'>玄铁冠</h4><div class='ln'><span class='k'>防御</span><span class='num'>+10</span></div>"><span class="rg">冠</span><span class="sl">头部</span></div>
+              <div class="slot bd-rg" style="left:56px;top:72px" data-info="<h4 class='rg'>玄铁重铠</h4><div class='ln'><span class='k'>防御</span><span class='num'>+22</span></div><div class='ln'><span class='k'>词条</span><span class='rg'>生命 +8%</span></div>"><span class="rg">铠</span><span class="sl">身体</span></div>
+              <div class="slot bd-rw" style="left:6px;top:52px" data-info="<h4 class='rw'>布制护腕</h4><div class='ln'><span class='k'>防御</span><span class='num'>+4</span></div>"><span class="rw">腕</span><span class="sl">手部</span></div>
+              <div class="slot bd-rb" style="left:56px;top:150px" data-info="<h4 class='rb'>疾风靴</h4><div class='ln'><span class='k'>速度</span><span class='num'>+12</span></div><div class='ln'><span class='k'>词条</span><span class='rg'>闪避 +5%</span></div>"><span class="rb">靴</span><span class="sl">脚部</span></div>
+              <div class="slot bd-rb" style="left:112px;top:118px" data-info="<h4 class='rb'>灵玉坠</h4><div class='ln'><span class='k'>灵力</span><span class='num'>+120</span></div>"><span class="rb">玉</span><span class="sl">饰品一</span></div>
+              <div class="slot" style="left:6px;top:118px"><span class="sl">饰品二</span></div>
+            </div>
+            <div class="equip-info">
+              <div class="info" id="equipInfo" style="min-height:130px">
+                <h4 class="rb">青云剑</h4>
+                <div class="ln"><span class="k">类型</span><span>武器 · 单手剑</span></div>
+                <div class="ln"><span class="k">品阶</span><span class="rb">法宝</span></div>
+                <div class="ln"><span class="k">攻击</span><span class="num">+45</span></div>
+                <div class="ln"><span class="k">词条</span><span class="rg">剑气 +12%</span></div>
+                <div class="ln"><span class="k">词条</span><span class="rg">暴击率 +5%</span></div>
+              </div>
+              <div class="sec-title">属性总览</div>
+              <div class="stat-line"><span class="tag">攻击</span><span class="spacer" style="flex:1"></span><span class="num">186</span></div>
+              <div class="stat-line"><span class="tag">防御</span><span class="spacer" style="flex:1"></span><span class="num">120</span></div>
+              <div class="stat-line"><span class="tag">速度</span><span class="spacer" style="flex:1"></span><span class="num">32</span></div>
+              <div class="stat-line"><span class="tag">暴击</span><span class="spacer" style="flex:1"></span><span class="num">18%</span></div>
+              <div class="stat-line"><span class="tag">幸运</span><span class="spacer" style="flex:1"></span><span class="num">12</span></div>
+              <div class="hint-line">悬停槽位查看装备详情</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 角色 -->
+        <div class="panel hidden" id="panel-char">
+          <div class="sec-title">境界</div>
+          <div class="card" style="margin-bottom:12px">
+            <h4>筑基 <span class="goldc">· 三层</span></h4>
+            <div class="desc">炼气九层大圆满 → 筑基 → 金丹 → 元婴 → 化神 → 渡劫</div>
+            <div class="bar-row"><div class="bar"><i style="width:72%;background:var(--gold)"></i></div><span class="num">72%</span></div>
+            <div class="bar-row" style="margin-top:8px">
+              <span style="color:var(--tx2)">突破条件：聚灵丹×3 · 灵石 500</span>
+              <button class="btn gold sm">突破</button>
+            </div>
+          </div>
+          <div class="sec-title">基础属性</div>
+          <div class="card">
+            <div class="ln" style="display:flex;justify-content:space-between"><span>生命</span><span class="num">1280</span></div>
+            <div class="ln" style="display:flex;justify-content:space-between"><span>灵力</span><span class="num">560</span></div>
+            <div class="ln" style="display:flex;justify-content:space-between"><span>攻击</span><span class="num">186 <span class="rb">+45</span></span></div>
+            <div class="ln" style="display:flex;justify-content:space-between"><span>防御</span><span class="num">120 <span class="rg">+22</span></span></div>
+            <div class="ln" style="display:flex;justify-content:space-between"><span>速度</span><span class="num">32</span></div>
+            <div class="ln" style="display:flex;justify-content:space-between"><span>暴击</span><span class="num">18%</span></div>
+            <div class="ln" style="display:flex;justify-content:space-between"><span>幸运</span><span class="num">12</span></div>
+          </div>
+          <div class="sec-title">游历统计</div>
+          <div class="card">
+            <div class="ln" style="display:flex;justify-content:space-between"><span>累计击杀</span><span class="num">1284</span></div>
+            <div class="ln" style="display:flex;justify-content:space-between"><span>拾取掉落</span><span class="num">342</span></div>
+            <div class="ln" style="display:flex;justify-content:space-between"><span>游历时日</span><span class="num">37 日</span></div>
+            <div class="ln" style="display:flex;justify-content:space-between"><span>宗门</span><span style="color:var(--tx2)">散修</span></div>
+          </div>
+        </div>
+
+        <!-- 地图 -->
+        <div class="panel hidden" id="panel-map">
+          <div class="sec-title">沧溟界 · 全域图</div>
+          <div class="mapbox">
+            <div id="mapGrid"></div>
+            <div class="farea" style="left:60%;top:10%;width:32%;height:30%;border-color:var(--good);color:var(--good);background:rgba(88,214,141,.07)">青云剑宗</div>
+            <div class="farea" style="left:8%;top:60%;width:28%;height:32%;border-color:var(--bad);color:var(--bad);background:rgba(255,90,90,.06)">血煞魔教</div>
+            <div class="farea" style="left:40%;top:50%;width:20%;height:20%;border-color:var(--gold);color:var(--gold);background:rgba(201,164,92,.06)">万宝商会</div>
+            <div class="mlabel" style="left:43%;top:32%">▣ 霜落城</div>
+            <div class="mlabel" style="left:76%;top:24%">▲ 青云剑宗</div>
+            <div class="mlabel" style="left:20%;top:76%">▲ 血煞魔教</div>
+            <div class="mlabel" style="left:22%;top:56%;color:var(--acc)">● 出生点</div>
+            <div class="mlabel" style="left:66%;top:66%;color:var(--tx2)">≈ 幽冥沼泽</div>
+            <div class="mlabel" style="left:48%;top:14%;color:var(--tx2)">♣ 灵雾森林</div>
+          </div>
+          <div class="legend">
+            ▓ 灰度 = 海拔（深=海，亮=山）<br>
+            ▣ 城镇 · ▲ 宗门 · ● 玩家 · 色块 = 势力领地<br>
+            <span style="color:var(--tx3)">世界由种子确定性生成，换种子即换世界。</span>
+          </div>
+        </div>
+
+        <!-- 宗门 -->
+        <div class="panel hidden" id="panel-sect">
+          <div class="sec-title">宗门势力</div>
+          <div class="card">
+            <h4>青云剑宗 <span class="badge good">正道</span></h4>
+            <div class="desc">北境剑道魁首，门规森严，剑法冠绝沧溟。</div>
+            <div class="bar-row"><span class="tag">好感</span><div class="bar"><i style="width:32%;background:var(--good)"></i></div><span class="num">320/1000</span></div>
+            <div class="bar-row"><span class="tag">贡献</span><div class="bar"><i style="width:0%;background:var(--gold)"></i></div><span class="num">0/10000</span></div>
+            <div class="row" style="margin-top:8px"><button class="btn sm primary" style="flex:1">申请加入</button></div>
+          </div>
+          <div class="card">
+            <h4>血煞魔教 <span class="badge bad">魔道</span></h4>
+            <div class="desc">盘踞幽冥沼泽，以血煞功法吞噬生灵，人人得而诛之。</div>
+            <div class="bar-row"><span class="tag">好感</span><div class="bar"><i style="width:0%;background:var(--bad)"></i></div><span class="num">-800/1000</span></div>
+            <div class="bar-row"><span class="tag">关系</span><span class="badl">敌对 · 见之即战</span></div>
+          </div>
+          <div class="card">
+            <h4>万宝商会 <span class="badge mid">中立</span></h4>
+            <div class="desc">只认灵石不认人，商路遍布各大城镇。</div>
+            <div class="bar-row"><span class="tag">好感</span><div class="bar"><i style="width:15%;background:var(--gold)"></i></div><span class="num">150/1000</span></div>
+            <div class="row" style="margin-top:8px"><button class="btn sm" style="flex:1">拜会分舵</button></div>
+          </div>
+          <div class="sec-title">宗门战况</div>
+          <div class="card" style="border-color:var(--bad)">
+            <div class="desc" style="margin:0"><span class="badl">● 进行中</span> 青云剑宗 vs 血煞魔教 —— 边界灵矿争夺战（第 37 日）</div>
+          </div>
+          <div class="sec-title">贡献兑换</div>
+          <div class="srow"><span class="rb">青云剑法 · 残卷</span><span class="name" style="text-align:right;color:var(--tx3)">功法</span><span class="price">500 贡献</span><button class="btn sm">兑换</button></div>
+          <div class="srow"><span class="rg">聚灵丹</span><span class="name" style="text-align:right;color:var(--tx3)">丹药</span><span class="price">120 贡献</span><button class="btn sm">兑换</button></div>
+          <div class="srow"><span class="rw">宗门令</span><span class="name" style="text-align:right;color:var(--tx3)">消耗品</span><span class="price">300 贡献</span><button class="btn sm">兑换</button></div>
+        </div>
+
+        <!-- 商店 -->
+        <div class="panel hidden" id="panel-shop">
+          <div class="row-between">
+            <span>霜落城 · 万宝商会</span><span class="goldc num" id="shopMoney">1280</span>
+          </div>
+          <div class="row" style="margin-bottom:10px">
+            <button class="btn sm primary" style="flex:1">购买</button>
+            <button class="btn sm" style="flex:1">出售</button>
+          </div>
+          <div class="srow"><span class="rw">回灵丹</span><span class="name" style="text-align:right;color:var(--tx3)">恢复灵力 300</span><span class="price">25 灵石</span><button class="btn sm" onclick="buy(25)">购买</button></div>
+          <div class="srow"><span class="rb">传送符</span><span class="name" style="text-align:right;color:var(--tx3)">回城</span><span class="price">60 灵石</span><button class="btn sm" onclick="buy(60)">购买</button></div>
+          <div class="srow"><span class="rw">玄铁锭</span><span class="name" style="text-align:right;color:var(--tx3)">炼器材料</span><span class="price">80 灵石</span><button class="btn sm" onclick="buy(80)">购买</button></div>
+          <div class="srow"><span class="rg">聚灵丹</span><span class="name" style="text-align:right;color:var(--tx3)">经验 +200</span><span class="price">150 灵石</span><button class="btn sm" onclick="buy(150)">购买</button></div>
+          <div class="srow"><span class="ro">藏宝图碎片</span><span class="name" style="text-align:right;color:var(--tx3)">1/3</span><span class="price">300 灵石</span><button class="btn sm" onclick="buy(300)">购买</button></div>
+          <div class="sec-title">出售（示例）</div>
+          <div class="srow"><span class="rw">兽皮</span><span class="name" style="text-align:right;color:var(--tx3)">×7</span><span class="price">12 灵石</span><button class="btn sm" onclick="sell(12)">出售</button></div>
+          <div class="srow"><span class="rg">妖兽内丹</span><span class="name" style="text-align:right;color:var(--tx3)">×1</span><span class="price">45 灵石</span><button class="btn sm" onclick="sell(45)">出售</button></div>
+          <div class="hint-line">原型演示：买卖仅演示灵石变化</div>
+        </div>
+
+        <!-- 任务 -->
+        <div class="panel hidden" id="panel-quest">
+          <div class="sec-title">主线</div>
+          <div class="card">
+            <h4 class="goldc">初入沧溟</h4>
+            <div class="desc">击杀赤焰狼，向霜落城卫队长证明你的实力。</div>
+            <div class="bar-row"><span class="tag">进度</span><div class="bar"><i style="width:60%;background:var(--gold)"></i></div><span class="num">6/10</span></div>
+            <div class="bar-row"><span style="color:var(--tx3)">奖励：经验 500 · 灵石 200</span></div>
+          </div>
+          <div class="sec-title">日常</div>
+          <div class="card">
+            <h4>悬赏 · 青风谷清剿</h4>
+            <div class="desc">清剿青风谷妖兽。</div>
+            <div class="bar-row"><span class="tag">进度</span><div class="bar"><i style="width:100%;background:var(--good)"></i></div><span class="num goodc" style="color:var(--good)">5/5 完成</span></div>
+          </div>
+          <div class="card">
+            <h4>采集 · 灵雾草</h4>
+            <div class="desc">灵雾森林采集灵雾草。</div>
+            <div class="bar-row"><span class="tag">进度</span><div class="bar"><i style="width:37%;background:var(--gold)"></i></div><span class="num">3/8</span></div>
+          </div>
+          <div class="sec-title">宗门</div>
+          <div class="card">
+            <h4>巡山（青云剑宗）</h4>
+            <div class="desc">巡查北境山道，击退滋扰妖兽。</div>
+            <div class="bar-row"><span class="tag">进度</span><div class="bar"><i style="width:66%;background:var(--gold)"></i></div><span class="num">2/3</span></div>
+          </div>
+        </div>
+
+        <!-- 编年史 -->
+        <div class="panel hidden" id="panel-chron">
+          <div class="sec-title">天道编年史</div>
+          <div class="entry major">
+            <div class="day">第 37 日</div>
+            <p>青云剑宗与血煞魔教在边界灵矿爆发冲突，双方各有死伤。霜落城发布戒严令。</p>
+          </div>
+          <div class="entry">
+            <div class="day">第 36 日</div>
+            <p>北境兽潮退去，霜落城开始重建城墙。城中修士纷纷议论兽潮背后的异动。</p>
+          </div>
+          <div class="entry">
+            <div class="day">第 34 日</div>
+            <p>灵雾森林深处有异光冲天，疑似上古仙府出世。各方势力闻风而动。</p>
+          </div>
+          <div class="entry">
+            <div class="day">第 30 日</div>
+            <p>万宝商会宣布在各大城镇设立拍卖行，宣称"只认灵石不认人"。</p>
+          </div>
+          <div class="entry">
+            <div class="day">第 25 日</div>
+            <p>你踏入沧溟界，成为一名无门无派的散修。天道自此记下你的名字。</p>
+          </div>
+          <div class="entry">
+            <div class="day">第 1 日</div>
+            <p>沧溟界初开，天道伊始。仙魔大战的余烬尚未散尽，灵气失衡，妖祸四起。</p>
+          </div>
+          <div class="hint-line">编年史由天道 AI 书写，也是它后续决策的上下文。</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 弹层：新建世界 ================= -->
+<div class="modal-bg hidden" id="mNew">
+  <div class="modal">
+    <h3>开辟新世界</h3>
+    <div class="field">
+      <label>世界名</label>
+      <input id="worldNameInput" value="沧溟界">
+    </div>
+    <div class="field">
+      <label>世界种子</label>
+      <div class="row">
+        <input id="seedInput" class="num" value="882345">
+        <button class="btn sm" onclick="randSeed()">随机</button>
+      </div>
+      <div class="sub">同一种子生成完全相同的世界（确定性程序化生成）</div>
+    </div>
+    <div class="field check">
+      <input type="checkbox" id="aiSeed" checked>
+      <label>由天道 AI 生成世界种子卡（首次进入时调用）</label>
+    </div>
+    <div class="row">
+      <button class="btn" onclick="closeModal('mNew')">取消</button>
+      <button class="btn primary" onclick="createWorld()">创建世界</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 弹层：设置 ================= -->
+<div class="modal-bg hidden" id="mSettings">
+  <div class="modal">
+    <h3>设置</h3>
+    <div class="field">
+      <label>AI API Key（OpenAI 兼容，如 DeepSeek）</label>
+      <input type="password" id="apiKey" placeholder="sk-...">
+      <div class="sub">仅保存在本地浏览器，用于调用天道 AI；不填则世界以模板事件运行</div>
+    </div>
+    <div class="field check">
+      <input type="checkbox" id="aiOn" checked>
+      <label>启用天道 AI（世界导演 / NPC 对话 / 命名）</label>
+    </div>
+    <div class="field">
+      <label>世界导演频率</label>
+      <select>
+        <option>每个世界日</option>
+        <option>每 3 个世界日</option>
+        <option>关闭（模板事件）</option>
+      </select>
+    </div>
+    <div class="field"><label>音乐音量</label><input type="range" min="0" max="100" value="70"></div>
+    <div class="field"><label>音效音量</label><input type="range" min="0" max="100" value="85"></div>
+    <div class="row">
+      <button class="btn" onclick="exportSave()">导出存档</button>
+      <button class="btn" onclick="pushLog('sys','[系统] API 连通正常（原型演示，未真实调用）')">测试 API</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn danger" onclick="pushLog('badl','[系统] 原型演示：存档不会真的清除')">清除存档</button>
+      <button class="btn" onclick="closeModal('mSettings')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= 工具 ================= */
+const $ = s => document.querySelector(s);
+let money = 1280;
+let seed = 882345;
+
+function hash2(x, y, s){
+  let h = Math.imul(x|0, 374761393) + Math.imul(y|0, 668265263) + Math.imul(s|0, 1442695041) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+/* 确定性地形单元格（原型演示版；正式版为 value noise + 生物群系） */
+function cellAt(x, y){
+  const v = hash2(x, y, seed) * 0.65 + hash2(x * 2 + 7, y * 2 + 13, seed) * 0.35;
+  if ((x === 5 && y === 6) || (x === 10 && y === 4)) return { g: 118, ch: '' };   // 安全区/城镇草地
+  if (x === 20 && y === 3) return { g: 200, ch: '∧' };                            // 宗门驻地
+  if (v < 0.28) return { g: 34 + Math.floor(hash2(x * 3, y * 5, seed) * 18), ch: '≈' };
+  if (v < 0.36) return { g: 96, ch: '∴' };
+  if (v < 0.62) return { g: 118 + Math.floor(hash2(x * 7, y * 9, seed) * 10), ch: '' };
+  if (v < 0.80) return { g: 104, ch: '♣' };
+  return { g: 196 + Math.floor(hash2(x * 5, y * 3, seed) * 40), ch: '∧' };
+}
+
+function renderTerrain(){
+  let h = '';
+  for (let y = 0; y < 14; y++)
+    for (let x = 0; x < 24; x++){
+      const c = cellAt(x, y);
+      h += `<div class="tile" style="background:rgb(${c.g},${c.g},${c.g})">${c.ch || ''}</div>`;
+    }
+  $('#terrain').innerHTML = h;
+}
+function renderMinimap(){
+  let h = '';
+  for (let y = 0; y < 10; y++)
+    for (let x = 0; x < 12; x++){
+      const c = cellAt(Math.floor(x * 2), Math.floor(y * 1.4));
+      h += `<div class="cell" style="background:rgb(${c.g},${c.g},${c.g})"></div>`;
+    }
+  $('#mmGrid').innerHTML = h;
+}
+function renderBigMap(){
+  let h = '';
+  for (let y = 0; y < 12; y++)
+    for (let x = 0; x < 16; x++){
+      const c = cellAt(Math.floor(x * 1.5), Math.floor(y * 1.17));
+      h += `<div class="cell" style="background:rgb(${c.g},${c.g},${c.g})"></div>`;
+    }
+  $('#mapGrid').innerHTML = h;
+}
+
+/* ================= 日志 ================= */
+function pushLog(cls, text){
+  const div = document.createElement('div');
+  div.className = 'log-line ' + (cls || '');
+  div.innerHTML = text;
+  $('#log').appendChild(div);
+  while ($('#log').children.length > 40) $('#log').removeChild($('#log').firstChild);
+  $('#log').scrollTop = $('#log').scrollHeight;
+}
+
+/* ================= 操作演示 ================= */
+function attack(){
+  const d = 20 + Math.floor(Math.random() * 120);
+  if (Math.random() < 0.15){
+    pushLog('c', `你发动御剑术！对赤焰狼造成 <b class="num">${d * 2}</b> 伤害（<span class="crit">暴击</span>）`);
+  } else {
+    pushLog('c', `你对赤焰狼造成 <b class="num">${d}</b> 伤害。`);
+  }
+  if (Math.random() < 0.5){
+    pushLog('c', `赤焰狼 攻击你，造成 <b class="num">${8 + Math.floor(Math.random() * 40)}</b> 伤害。`);
+  }
+  if (Math.random() < 0.25) pickup(true);
+}
+function attackSkill(){
+  const d = 90 + Math.floor(Math.random() * 160);
+  pushLog('c', `你施展【御剑术】，剑光如虹！对赤焰狼造成 <b class="num">${d}</b> 伤害。`);
+  if (Math.random() < 0.4) pickup(true);
+}
+function pickup(silent){
+  money += 3;
+  $('#money').textContent = money;
+  $('#shopMoney').textContent = money;
+  if (!silent) pushLog('gold', `你拾取了 <b class="num">3</b> 灵石。`);
+}
+function buy(p){
+  if (money < p){ pushLog('badl', `[商店] 灵石不足（需 <b class="num">${p}</b>）。`); return; }
+  money -= p;
+  $('#money').textContent = money;
+  $('#shopMoney').textContent = money;
+  pushLog('gold', `[商店] 你花费 <b class="num">${p}</b> 灵石购买物品（演示）。`);
+}
+function sell(p){
+  money += p;
+  $('#money').textContent = money;
+  $('#shopMoney').textContent = money;
+  pushLog('gold', `[商店] 你出售物品，获得 <b class="num">${p}</b> 灵石（演示）。`);
+}
+
+/* ================= 面板切换 ================= */
+document.querySelectorAll('#tabbar .tab').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('#tabbar .tab').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+    $('#panel-' + t.dataset.tab).classList.remove('hidden');
+  };
+});
+
+/* ================= 物品 / 槽位 悬停信息 ================= */
+document.querySelectorAll('.cell[data-info]').forEach(c => {
+  c.onmouseenter = () => { $('#itemInfo').innerHTML = c.dataset.info; };
+});
+document.querySelectorAll('.slot[data-info]').forEach(s => {
+  s.onmouseenter = () => { $('#equipInfo').innerHTML = s.dataset.info; };
+});
+
+/* ================= 弹层 ================= */
+function openModal(id){ $('#' + id).classList.remove('hidden'); }
+function closeModal(id){ $('#' + id).classList.add('hidden'); }
+
+function randSeed(){
+  $('#seedInput').value = Math.floor(100000 + Math.random() * 900000);
+}
+
+function createWorld(){
+  const s = parseInt($('#seedInput').value, 10);
+  seed = isNaN(s) ? seed : s;
+  $('#worldNameTop').textContent = $('#worldNameInput').value || '沧溟界';
+  renderTerrain(); renderMinimap(); renderBigMap();
+  $('#start').classList.add('hidden');
+  $('#game').classList.remove('hidden');
+  closeModal('mNew');
+  pushLog('sys', `[系统] 你踏入<b>${$('#worldNameTop').textContent}</b>（种子 <span class="num">${seed}</span>）。天道注视着这片大地。`);
+}
+
+function exportSave(){
+  const data = { version: '0.1.0-prototype', worldName: $('#worldNameTop').textContent, seed, money };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cangming-save.json';
+  a.click();
+  pushLog('sys', '[系统] 已导出存档 JSON（原型演示）。');
+}
+
+/* ================= 初始日志 ================= */
+pushLog('sys', '[系统] 欢迎来到《沧溟 · 几何修真》UI 原型 —— 全部界面均为静态演示，可点击各处查看。');
+pushLog('gold', '[世界] 第 37 日：青云剑宗与血煞魔教在边界灵矿爆发冲突。');
+pushLog('c', '[战斗] 赤焰狼 攻击你，造成 <b class="num">34</b> 伤害。');
+pushLog('lootL', '[掉落] 你拾取了「破军枪 · 紫」。');
+
+renderTerrain(); renderMinimap(); renderBigMap();
+</script>
+</body>
+</html>

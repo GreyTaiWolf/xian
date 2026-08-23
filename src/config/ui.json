@@ -1,0 +1,13 @@
+{
+  "dayLengthMinutes": 5,
+  "panels": [
+    { "id": "inv", "label": "背包" },
+    { "id": "equip", "label": "装备" },
+    { "id": "char", "label": "角色" },
+    { "id": "map", "label": "地图" },
+    { "id": "sect", "label": "宗门" },
+    { "id": "shop", "label": "商店" },
+    { "id": "quest", "label": "任务" },
+    { "id": "chron", "label": "编年史" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "apiBase": "/api",
+  "model": "deepseek-chat",
+  "temperature": 0.7,
+  "directorIntervalDays": 1,
+  "maxRetries": 2,
+  "timeoutMs": 30000,
+  "fallbackToTemplates": true,
+  "summaryMaxTokens": 800
+}

@@ -1,0 +1,43 @@
+{
+  "sects": [
+    {
+      "id": "qingyun",
+      "name": "青云剑宗",
+      "alignment": "正道",
+      "desc": "北境剑道魁首，门规森严，剑法冠绝沧溟。",
+      "joinLevel": 3,
+      "passive": "攻击 +5%",
+      "exchange": [
+        { "item": "portal_fu", "cost": 60 },
+        { "item": "xp_pill", "cost": 120 },
+        { "item": "green_sword", "cost": 400 }
+      ]
+    },
+    {
+      "id": "xuesha",
+      "name": "血煞魔教",
+      "alignment": "魔道",
+      "desc": "盘踞幽冥沼泽，以杀证道，人人得而诛之。",
+      "joinLevel": 5,
+      "passive": "修为 +10%",
+      "exchange": [
+        { "item": "hp_pill", "cost": 30 },
+        { "item": "wolf_core", "cost": 60 },
+        { "item": "war_spear", "cost": 800 }
+      ]
+    },
+    {
+      "id": "wanbao",
+      "name": "万宝商会",
+      "alignment": "中立",
+      "desc": "只认灵石不认人，商路遍布各大城镇。",
+      "joinLevel": 1,
+      "passive": "出售价格 +10%",
+      "exchange": [
+        { "item": "iron_ingot", "cost": 40 },
+        { "item": "xp_pill", "cost": 100 },
+        { "item": "treasure_frag", "cost": 500 }
+      ]
+    }
+  ]
+}

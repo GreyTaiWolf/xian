@@ -1,0 +1,8 @@
+{
+  "monsters": [
+    { "id": "wolf", "name": "赤焰狼", "lvl": 2, "hp": 40, "atk": 8, "def": 2, "spd": 3.2, "aggro": 3.2, "xp": 18, "respawnMs": 15000, "dropTable": "wolf", "color": "#ff6b5a", "scale": 1, "count": 10, "elite": false, "boss": false },
+    { "id": "panther", "name": "幽冥豹", "lvl": 4, "hp": 70, "atk": 12, "def": 4, "spd": 4.5, "aggro": 3.5, "xp": 32, "respawnMs": 20000, "dropTable": "panther", "color": "#b45aff", "scale": 1.1, "count": 8, "elite": false, "boss": false },
+    { "id": "stone_beast", "name": "石甲兽", "lvl": 7, "hp": 130, "atk": 16, "def": 10, "spd": 2.6, "aggro": 3, "xp": 60, "respawnMs": 30000, "dropTable": "stone", "color": "#ff9a3c", "scale": 1.5, "count": 5, "elite": true, "boss": false },
+    { "id": "wolf_king", "name": "赤焰狼王", "lvl": 9, "hp": 320, "atk": 26, "def": 8, "spd": 3, "aggro": 5, "xp": 400, "respawnMs": 300000, "dropTable": "boss", "color": "#ff4d4d", "scale": 2.2, "count": 1, "elite": true, "boss": true }
+  ]
+}

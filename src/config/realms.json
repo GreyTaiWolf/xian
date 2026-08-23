@@ -1,0 +1,10 @@
+{
+  "realms": [
+    { "id": "qi", "name": "炼气", "tier": 0, "breakthrough": { "money": 500, "item": "xp_pill", "count": 3, "successBase": 0.6, "successLuck": 0.002 } },
+    { "id": "foundation", "name": "筑基", "tier": 1, "breakthrough": { "money": 1200, "item": "xp_pill", "count": 5, "successBase": 0.55, "successLuck": 0.002 } },
+    { "id": "golden_core", "name": "金丹", "tier": 2, "breakthrough": { "money": 3000, "item": "wolf_core", "count": 3, "successBase": 0.5, "successLuck": 0.002 } },
+    { "id": "nascent_soul", "name": "元婴", "tier": 3, "breakthrough": { "money": 8000, "item": "wolf_core", "count": 5, "successBase": 0.45, "successLuck": 0.002 } },
+    { "id": "spirit", "name": "化神", "tier": 4, "breakthrough": { "money": 20000, "item": "treasure_frag", "count": 3, "successBase": 0.4, "successLuck": 0.002 } },
+    { "id": "tribulation", "name": "渡劫", "tier": 5, "breakthrough": { "money": 50000, "item": "treasure_frag", "count": 5, "successBase": 0.35, "successLuck": 0.002 } }
+  ]
+}

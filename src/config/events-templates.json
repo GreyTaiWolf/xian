@@ -1,0 +1,10 @@
+{
+  "templates": [
+    { "type": "relation", "delta": 8, "text": "青云剑宗与血煞魔教在边境小有摩擦，气氛渐紧。" },
+    { "type": "relation", "delta": -12, "text": "两派代表在霜落城会晤，剑拔弩张之势稍缓。" },
+    { "type": "buff", "xpMult": 1.15, "durationDays": 2, "text": "灵脉涌动，天地灵气浓郁，修士修炼事半功倍。" },
+    { "type": "beast_tide", "target": "town", "power": 1, "text": "城外妖兽躁动，霜落城发布悬赏清剿。" },
+    { "type": "npc", "text": "万宝商会的车队抵达霜落城，带来了远方的奇货。" },
+    { "type": "npc", "text": "有散修在灵雾森林发现上古碑文，城中议论纷纷。" }
+  ]
+}
