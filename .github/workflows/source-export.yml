@@ -1,0 +1,24 @@
+name: Temporary source export
+
+on:
+  push:
+    branches: ["feat/ai-world-sim-p1"]
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Export source files
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-source-snapshot
+          retention-days: 1
+          path: |
+            scripts/selftest.ts
+            src/game/state.ts
+            src/core/save.ts
+            src/main.ts
