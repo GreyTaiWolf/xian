@@ -15,6 +15,8 @@ import {
   migrateV5toV6,
   migrateV6toV7,
   migrateV7toV8,
+  migrateV8toV9,
+  normalizeV9State,
   type GameState,
 } from '../src/game/state';
 import {
@@ -32,6 +34,7 @@ import { canAffordChoice, choiceCostText, pickTravelEvent, resolveTravelEvent } 
 import { GameRuntime } from '../src/systems/runtime';
 import { validateDirectives } from '../src/ai/validator';
 import { bus } from '../src/core/eventbus';
+import { simulationWorldDay } from '../src/simulation';
 
 let pass = 0;
 let fail = 0;
@@ -233,8 +236,10 @@ console.log('== 6. 存档迁移链 ==');
   );
   const d4 = defaultState();
   check(
-    '默认存档为 v8 且字段齐全',
-    d4.version === 8 &&
+    '默认存档为 v9 且动态世界字段齐全',
+    d4.version === 9 &&
+      d4.simulation.seed === d4.world.seed &&
+      simulationWorldDay(d4.simulation) === d4.world.day &&
       d4.world.chronicle.length === 1 &&
       d4.player.quests.length === 3 &&
       d4.player.mind === 60 &&
@@ -274,10 +279,26 @@ console.log('== 6. 存档迁移链 ==');
       typeof s8.world.eventFlags === 'object' &&
       s8.player.mainQuestStage === 0,
   );
-  const snap = JSON.parse(JSON.stringify(s8)) as GameState;
+  const legacyV8 = { ...s8, simulation: undefined } as unknown as GameState;
+  const s9 = migrateV8toV9(legacyV8);
   check(
-    '存档 JSON 往返后派生属性一致',
-    JSON.stringify(derivedStats(s4)) === JSON.stringify(derivedStats(snap)),
+    'v8→v9 补动态世界并同步种子/世界日',
+    s9.version === 9 &&
+      s9.simulation.seed === s9.world.seed &&
+      simulationWorldDay(s9.simulation) === s9.world.day,
+  );
+  const normalized = normalizeV9State({ ...s9, simulation: defaultState().simulation });
+  check(
+    'v9 归一可修复种子不符的模拟状态',
+    normalized.simulation.seed === normalized.world.seed &&
+      simulationWorldDay(normalized.simulation) === normalized.world.day,
+  );
+  const snap = JSON.parse(JSON.stringify(s9)) as GameState;
+  check(
+    '存档 JSON 往返后派生属性与动态世界一致',
+    JSON.stringify(derivedStats(s4)) === JSON.stringify(derivedStats(snap)) &&
+      snap.simulation.seed === snap.world.seed &&
+      simulationWorldDay(snap.simulation) === snap.world.day,
   );
 }
 
