@@ -1,5 +1,8 @@
 /** 可存档游戏状态模型 —— 存档 = 此结构的 JSON 序列化。 */
 import { config } from '../core/config';
+import { createSimulationAtWorldDay, synchronizeSimulationToWorldDay } from '../simulation/integration';
+import { createInitialWorldSimulation } from '../simulation/state';
+import type { WorldSimulationState } from '../simulation/types';
 
 export type EquipSlot = 'weapon' | 'head' | 'body' | 'hands' | 'feet' | 'trinket1' | 'trinket2';
 
@@ -127,6 +130,7 @@ export interface Settings {
 export interface GameState {
   version: number;
   world: WorldState;
+  simulation: WorldSimulationState;
   player: PlayerState;
   inventory: (ItemInstance | null)[];
   equipment: Record<EquipSlot, ItemInstance | null>;
@@ -137,6 +141,7 @@ export interface GameState {
 export const INV_SIZE = 32;
 /** 世界原点即出生点（等级梯度的参照点） */
 export const SPAWN_POS = { x: 0.5, y: 0.5 };
+export const DEFAULT_WORLD_SEED = 882345;
 
 let uidCounter = Date.now() % 900000;
 export function nextUid(): number {
@@ -167,9 +172,9 @@ export function initialQuests(): QuestState[] {
 
 export function defaultState(): GameState {
   return {
-    version: 8,
+    version: 9,
     world: {
-      seed: 882345,
+      seed: DEFAULT_WORLD_SEED,
       name: '沧溟界',
       day: 1,
       createdAt: Date.now(),
@@ -183,6 +188,7 @@ export function defaultState(): GameState {
       eventCooldowns: {},
       realmEntered: false,
     },
+    simulation: createInitialWorldSimulation(DEFAULT_WORLD_SEED),
     player: {
       name: '林道玄',
       level: 1,
@@ -288,7 +294,8 @@ export function migrateV4toV5(d: GameState): GameState {
 }
 
 /** v5 → v6 迁移：物品实例补词条字段；玩家补心境/悟性。 */
-export function migrateV5toV6(d: GameState): GameState {  const withAffixes = (it: ItemInstance | null): ItemInstance | null =>
+export function migrateV5toV6(d: GameState): GameState {
+  const withAffixes = (it: ItemInstance | null): ItemInstance | null =>
     it ? { ...it, affixes: it.affixes ?? [] } : null;
   return {
     ...d,
@@ -341,4 +348,28 @@ export function migrateV7toV8(d: GameState): GameState {
     },
     player: { ...d.player, mainQuestStage: d.player.mainQuestStage ?? 0 },
   };
+}
+
+/** v8 → v9 迁移：建立与旧世界日、世界种子同步的动态世界状态。 */
+export function migrateV8toV9(d: GameState): GameState {
+  const legacy = d as GameState & { simulation?: unknown };
+  return {
+    ...d,
+    version: 9,
+    simulation: synchronizeSimulationToWorldDay(legacy.simulation, d.world.seed, d.world.day),
+  };
+}
+
+/** v9 读档归一：修复缺失、损坏、种子不符或时钟失步的模拟状态。 */
+export function normalizeV9State(d: GameState): GameState {
+  return {
+    ...d,
+    version: 9,
+    simulation: synchronizeSimulationToWorldDay(d.simulation, d.world.seed, d.world.day),
+  };
+}
+
+/** 新建世界时同时建立对应种子的动态模拟。 */
+export function createWorldSimulation(seed: number, worldDay = 1): WorldSimulationState {
+  return createSimulationAtWorldDay(seed, worldDay);
 }

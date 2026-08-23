@@ -3,6 +3,11 @@ import {
   buildNpcDialogueAiContext,
   buildWorldEventAiContext,
   createInitialWorldSimulation,
+  createSimulationAtWorldDay,
+  pickOfflineTemplateIndices,
+  planOfflineCatchUp,
+  simulationWorldDay,
+  synchronizeSimulationToWorldDay,
   validateAiCommand,
   validateSimulationInvariants,
   type AiCommandContext,
@@ -40,8 +45,14 @@ advanceWorldHours(untouched, 72);
 assert(stableJson(untouched) === before, '推进函数不得修改输入状态');
 
 const rangerContext = buildNpcDialogueAiContext(initialA, 'npc_ranger_mei', 'player', '最近为什么有野兽南下？');
-assert(rangerContext.allowedFactIds.includes('fact_north_beasts'), 'NPC 对话上下文应包含角色已知事实');
-assert(!rangerContext.allowedFactIds.includes('fact_merchant_hoarding'), 'NPC 对话上下文不得泄露角色不知道的秘密');
+assert(
+  rangerContext.allowedFactIds.includes('fact_north_beasts'),
+  'NPC 对话上下文应包含角色已知事实',
+);
+assert(
+  !rangerContext.allowedFactIds.includes('fact_merchant_hoarding'),
+  'NPC 对话上下文不得泄露角色不知道的秘密',
+);
 assert(rangerContext.playerMessage.length > 0, '玩家消息必须进入受限对话上下文');
 
 const regionContext = buildWorldEventAiContext(advancedA, 'north_forest');
@@ -117,5 +128,30 @@ const rejectedRelationshipBurst = validateAiCommand(
   initialA,
 );
 assert(!rejectedRelationshipBurst.ok, 'AI 不得一次大幅修改关系');
+
+
+const migratedDaySeven = createSimulationAtWorldDay(882345, 7);
+assert(simulationWorldDay(migratedDaySeven) === 7, '模拟世界必须能确定性快进到旧存档世界日');
+
+const synchronizedForward = synchronizeSimulationToWorldDay(migratedDaySeven, 882345, 12);
+assert(simulationWorldDay(synchronizedForward) === 12, '落后的模拟世界必须只向前同步');
+
+const synchronizedNewSeed = synchronizeSimulationToWorldDay(migratedDaySeven, 999, 4);
+assert(synchronizedNewSeed.seed === 999 && simulationWorldDay(synchronizedNewSeed) === 4, '世界种子变化时必须重建模拟');
+
+
+const veryOldSaveSimulation = createSimulationAtWorldDay(882345, 100_005);
+assert(simulationWorldDay(veryOldSaveSimulation) === 100_005, '超长旧档迁移不得因世界日过大而丢档');
+
+const offlinePlan = planOfflineCatchUp(0, 10_000, 1_000, 7);
+assert(
+  offlinePlan.rawDays === 10 && offlinePlan.appliedDays === 7 && offlinePlan.capped,
+  '离线快进必须计算原始天数并应用硬上限',
+);
+
+const offlinePicksA = pickOfflineTemplateIndices(882345, 30, 12, 6);
+const offlinePicksB = pickOfflineTemplateIndices(882345, 30, 12, 6);
+assert(stableJson(offlinePicksA) === stableJson(offlinePicksB), '离线编年史模板选择必须可复现');
+assert(offlinePicksA.every((index) => index >= 0 && index < 6), '离线模板索引必须保持在合法范围');
 
 console.log(`AI 动态世界模拟自测通过：${passed} 项断言。`);
