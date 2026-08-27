@@ -1,6 +1,8 @@
 # UI 界面设计规范（v0.1）
 
 > 静态原型实现：`ui/prototype.html`（本规范的可视化基准，全部屏幕可交互预览）。
+>
+> 视觉探索参考：[`ui-reference-gallery.md`](ui-reference-gallery.md)。参考图只用于布局、层级与美术方向，不覆盖本文档的工程约束。
 
 ## 1. 设计原则
 

@@ -41,6 +41,7 @@ npm.cmd run worldsim:selftest
 | `docs/game-design.md` | 总体设计（AI/代码分工、地图生成、天道机制） |
 | `docs/phases.md` | P0~M4 分阶段内容设计 |
 | `docs/ui-design.md` | UI 规范（调色板/布局/组件/交互） |
+| `docs/ui-reference-gallery.md` | UI 视觉参考图库（概念图、可借鉴点与落地边界） |
 | `docs/ai-world-simulation.md` | AI 动态世界架构、数据模型、Tick、存档与接入计划 |
 | `docs/ai-prompt-contracts.md` | 游戏内 AI 提示词契约与结构化输出边界 |
 | `ui/prototype.html` | 静态原型（UI 视觉基准，双击可预览） |
