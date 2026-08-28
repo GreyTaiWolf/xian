@@ -11,11 +11,12 @@ import {
   migrateV6toV7,
   migrateV7toV8,
   migrateV8toV9,
-  normalizeV9State,
+  migrateV9toV10,
+  normalizeV10State,
 } from '../game/state';
 
 export const SAVE_KEY = 'cangming-save';
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 interface Envelope {
   version: number;
@@ -33,6 +34,7 @@ const migrations: Record<number, (data: unknown) => unknown> = {
   6: (d) => migrateV6toV7(d as GameState),
   7: (d) => migrateV7toV8(d as GameState),
   8: (d) => migrateV8toV9(d as GameState),
+  9: (d) => migrateV9toV10(d as GameState),
 };
 
 /** 上次存档时间戳（离线快进用）。 */
@@ -48,7 +50,16 @@ export function lastSavedAt(): number | null {
 }
 
 function migrateToCurrent(version: number, data: unknown): GameState | null {
-  if (!Number.isInteger(version) || version < 1 || version > SAVE_VERSION || !data) return null;
+  if (
+    !Number.isInteger(version) ||
+    version < 1 ||
+    version > SAVE_VERSION ||
+    typeof data !== 'object' ||
+    data === null ||
+    Array.isArray(data)
+  ) return null;
+  const embeddedVersion = (data as { version?: unknown }).version;
+  if (embeddedVersion !== undefined && embeddedVersion !== version) return null;
   let currentVersion = version;
   let currentData: unknown = data;
   while (currentVersion < SAVE_VERSION) {
@@ -57,18 +68,22 @@ function migrateToCurrent(version: number, data: unknown): GameState | null {
     currentData = migrate(currentData);
     currentVersion += 1;
   }
-  return normalizeV9State(currentData as GameState);
+  return normalizeV10State(currentData as GameState);
 }
 
 export function saveToLocal(state: GameState): void {
   const env: Envelope = { version: SAVE_VERSION, savedAt: Date.now(), data: state };
-  localStorage.setItem(SAVE_KEY, JSON.stringify(env));
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(env));
+  } catch (error) {
+    console.warn('[存档] 本地保存失败', error);
+  }
 }
 
 export function loadFromLocal(): GameState | null {
-  const raw = localStorage.getItem(SAVE_KEY);
-  if (!raw) return null;
   try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
     const env = JSON.parse(raw) as Envelope;
     return migrateToCurrent(env.version, env.data);
   } catch {
@@ -77,12 +92,21 @@ export function loadFromLocal(): GameState | null {
 }
 
 export function clearSave(): void {
-  localStorage.removeItem(SAVE_KEY);
+  try {
+    localStorage.removeItem(SAVE_KEY);
+  } catch (error) {
+    console.warn('[存档] 本地清除失败', error);
+  }
 }
 
 export function exportSave(state: GameState): void {
+  // API Key 属于本地凭据，不随可分享存档导出。
+  const exportState: GameState = {
+    ...state,
+    settings: { ...state.settings, apiKey: '' },
+  };
   const blob = new Blob(
-    [JSON.stringify({ version: SAVE_VERSION, savedAt: Date.now(), data: state }, null, 2)],
+    [JSON.stringify({ version: SAVE_VERSION, savedAt: Date.now(), data: exportState }, null, 2)],
     { type: 'application/json' },
   );
   const a = document.createElement('a');

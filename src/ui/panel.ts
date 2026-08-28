@@ -31,7 +31,10 @@ export class PanelManager {
   }
 
   show(id: string): void {
-    if (id === this.current) return;
+    if (id === this.current) {
+      this.onChange?.(id);
+      return;
+    }
     this.tabEls.forEach((t, tid) => t.classList.toggle('on', tid === id));
     this.panelEls.forEach((p, pid) => p.classList.toggle('hidden', pid !== id));
     this.current = id;

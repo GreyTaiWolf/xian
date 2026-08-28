@@ -28,7 +28,7 @@ export function buildStartScreen(opts: {
         <button class="btn" data-act="settings">设置</button>
       </div>
     </div>
-    <div class="ver">P0 框架 · 单机网页版 · v0.1.0</div>
+    <div class="ver">行动时间线 · 三波秘境 · v2.0.0</div>
   `;
   root.querySelector<HTMLElement>('[data-act="new"]')!.addEventListener('click', opts.onNew);
   root.querySelector<HTMLElement>('[data-act="continue"]')!.addEventListener('click', opts.onContinue);

@@ -33,6 +33,14 @@ export interface GroundDrop {
   y: number;
 }
 
+/** 秘境进度与待领取奖励；奖励候选入档，避免背包满或刷新页面后丢失。 */
+export interface RealmProgress {
+  highestCleared: number;
+  totalClears: number;
+  readyDay: number;
+  pendingRewards: ItemInstance[];
+}
+
 export interface PlayerBase {
   hpMax: number;
   mpMax: number;
@@ -117,6 +125,8 @@ export interface WorldState {
   eventCooldowns: Record<string, number>;
   /** 是否已进入过秘境（主线判定） */
   realmEntered: boolean;
+  /** V2 三波秘境的持久进度。 */
+  realmProgress: RealmProgress;
 }
 
 export interface Settings {
@@ -125,6 +135,10 @@ export interface Settings {
   directorIntervalDays: number;
   musicVolume: number;
   sfxVolume: number;
+  /** 自动在合法时机施展已解锁技能。 */
+  autoSkills: boolean;
+  /** 战斗表现速度；结算顺序不变。 */
+  combatSpeed: 1 | 2;
 }
 
 export interface GameState {
@@ -172,7 +186,7 @@ export function initialQuests(): QuestState[] {
 
 export function defaultState(): GameState {
   return {
-    version: 9,
+    version: 10,
     world: {
       seed: DEFAULT_WORLD_SEED,
       name: '沧溟界',
@@ -187,6 +201,7 @@ export function defaultState(): GameState {
       eventFlags: {},
       eventCooldowns: {},
       realmEntered: false,
+      realmProgress: { highestCleared: 0, totalClears: 0, readyDay: 1, pendingRewards: [] },
     },
     simulation: createInitialWorldSimulation(DEFAULT_WORLD_SEED),
     player: {
@@ -219,6 +234,8 @@ export function defaultState(): GameState {
       directorIntervalDays: 1,
       musicVolume: 70,
       sfxVolume: 85,
+      autoSkills: true,
+      combatSpeed: 1,
     },
   };
 }
@@ -366,6 +383,112 @@ export function normalizeV9State(d: GameState): GameState {
     ...d,
     version: 9,
     simulation: synchronizeSimulationToWorldDay(d.simulation, d.world.seed, d.world.day),
+  };
+}
+
+function finiteInteger(value: unknown, fallback: number, min: number, max: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
+  return Math.max(min, Math.min(max, Math.floor(value)));
+}
+
+function normalizePendingRealmRewards(value: unknown): ItemInstance[] {
+  if (!Array.isArray(value)) return [];
+
+  const templates = new Map(config.items.items.map((item) => [item.id, item]));
+  const affixStats = new Set(config.affixes.pools.map((affix) => affix.stat));
+  const maxCandidates = Math.max(1, ...config.trials.floors.map((floor) => floor.pickCount));
+  const seenUids = new Set<number>();
+  const rewards: ItemInstance[] = [];
+
+  for (const raw of value) {
+    if (rewards.length >= maxCandidates) break;
+    if (!raw || typeof raw !== 'object') continue;
+    const candidate = raw as Record<string, unknown>;
+    if (typeof candidate.templateId !== 'string') continue;
+    const template = templates.get(candidate.templateId);
+    if (!template) continue;
+
+    let uid =
+      typeof candidate.uid === 'number' && Number.isSafeInteger(candidate.uid) && candidate.uid > 0
+        ? candidate.uid
+        : nextUid();
+    while (seenUids.has(uid)) uid = nextUid();
+    seenUids.add(uid);
+
+    const equipment = template.type === 'weapon' || template.type === 'armor';
+    const affixes: ItemAffix[] = [];
+    if (equipment && Array.isArray(candidate.affixes)) {
+      for (const rawAffix of candidate.affixes.slice(0, 8)) {
+        if (!rawAffix || typeof rawAffix !== 'object') continue;
+        const affix = rawAffix as Record<string, unknown>;
+        if (
+          typeof affix.stat !== 'string' ||
+          !affixStats.has(affix.stat) ||
+          typeof affix.value !== 'number' ||
+          !Number.isFinite(affix.value) ||
+          affix.value <= 0
+        ) {
+          continue;
+        }
+        affixes.push({ stat: affix.stat, value: Math.min(1_000_000, affix.value) });
+      }
+    }
+
+    rewards.push({
+      uid,
+      templateId: template.id,
+      count: finiteInteger(candidate.count, 1, 1, template.stack),
+      plus: equipment ? finiteInteger(candidate.plus, 0, 0, 5) : 0,
+      affixes,
+    });
+  }
+  return rewards;
+}
+
+/** v9 → v10：补齐三波秘境进度、自动技能与战斗速度。 */
+export function migrateV9toV10(d: GameState): GameState {
+  const normalized = normalizeV9State(d);
+  const legacyWorld = normalized.world as WorldState & { realmProgress?: unknown };
+  const realmProgress =
+    legacyWorld.realmProgress && typeof legacyWorld.realmProgress === 'object'
+      ? (legacyWorld.realmProgress as unknown as Record<string, unknown>)
+      : {};
+  const legacySettings = normalized.settings as Settings & {
+    autoSkills?: unknown;
+    combatSpeed?: unknown;
+  };
+  return {
+    ...normalized,
+    version: 10,
+    world: {
+      ...normalized.world,
+      realmProgress: {
+        highestCleared: finiteInteger(
+          realmProgress.highestCleared,
+          0,
+          0,
+          config.trials.floors.length,
+        ),
+        totalClears: finiteInteger(realmProgress.totalClears, 0, 0, Number.MAX_SAFE_INTEGER),
+        readyDay: finiteInteger(realmProgress.readyDay, 1, 1, Number.MAX_SAFE_INTEGER),
+        pendingRewards: normalizePendingRealmRewards(realmProgress.pendingRewards),
+      },
+    },
+    settings: {
+      ...normalized.settings,
+      autoSkills: typeof legacySettings.autoSkills === 'boolean' ? legacySettings.autoSkills : true,
+      combatSpeed: legacySettings.combatSpeed === 2 ? 2 : 1,
+    },
+  };
+}
+
+/** v10 读档归一：修复新增字段并继续保持动态世界时钟一致。 */
+export function normalizeV10State(d: GameState): GameState {
+  const migrated = migrateV9toV10({ ...d, version: 9 });
+  return {
+    ...migrated,
+    version: 10,
+    simulation: synchronizeSimulationToWorldDay(migrated.simulation, migrated.world.seed, migrated.world.day),
   };
 }
 

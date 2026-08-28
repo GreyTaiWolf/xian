@@ -20,6 +20,8 @@ import crafting from '../config/crafting.json';
 import affixes from '../config/affixes.json';
 import achievements from '../config/achievements.json';
 import travelEvents from '../config/travel-events.json';
+import combat from '../config/combat.json';
+import trials from '../config/trials.json';
 
 export const config = {
   ui,
@@ -41,4 +43,6 @@ export const config = {
   affixes,
   achievements,
   travelEvents,
+  combat,
+  trials,
 } as const;

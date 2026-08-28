@@ -3,11 +3,47 @@
     {
       "id": "sword_qi",
       "name": "御剑术",
-      "mp": 30,
-      "cdMs": 6000,
-      "mult": 2.2,
-      "range": 3.5,
-      "desc": "剑气纵横，重创目标。"
+      "shortName": "御剑",
+      "mp": 25,
+      "cdMs": 4500,
+      "mult": 2.0,
+      "range": 3.8,
+      "unlockLevel": 1,
+      "targetMode": "single",
+      "maxTargets": 1,
+      "autoMinTargets": 1,
+      "priority": 10,
+      "desc": "驭剑成虹，远程重创单个目标。"
+    },
+    {
+      "id": "sword_array",
+      "name": "归元剑阵",
+      "shortName": "剑阵",
+      "mp": 45,
+      "cdMs": 9000,
+      "mult": 1.15,
+      "range": 3.2,
+      "unlockLevel": 4,
+      "targetMode": "multi",
+      "maxTargets": 3,
+      "autoMinTargets": 2,
+      "priority": 30,
+      "desc": "剑意分化，最多同时攻击三个目标。"
+    },
+    {
+      "id": "heaven_breaker",
+      "name": "破天一剑",
+      "shortName": "破天",
+      "mp": 60,
+      "cdMs": 12000,
+      "mult": 3.2,
+      "range": 2.8,
+      "unlockLevel": 8,
+      "targetMode": "single",
+      "maxTargets": 1,
+      "autoMinTargets": 1,
+      "priority": 20,
+      "desc": "凝聚全部锋芒，对首领造成毁灭性一击。"
     }
   ]
 }

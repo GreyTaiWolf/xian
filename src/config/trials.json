@@ -1,0 +1,76 @@
+{
+  "version": 2,
+  "waveDelayMs": 900,
+  "floors": [
+    {
+      "floor": 1,
+      "name": "雾隐石窟",
+      "unlockTier": 1,
+      "recommendedPower": 180,
+      "cooldownDays": 1,
+      "waves": [
+        { "monster": "wolf", "count": 4, "powerBonus": 0.25 },
+        { "monster": "panther", "count": 3, "powerBonus": 0.4 },
+        { "monster": "stone_beast", "count": 1, "powerBonus": 0.65 }
+      ],
+      "rewardTable": "trial_1",
+      "pickCount": 3
+    },
+    {
+      "floor": 2,
+      "name": "赤焰回廊",
+      "unlockTier": 1,
+      "recommendedPower": 300,
+      "cooldownDays": 1,
+      "waves": [
+        { "monster": "wolf", "count": 5, "powerBonus": 0.55 },
+        { "monster": "panther", "count": 4, "powerBonus": 0.75 },
+        { "monster": "wolf_king", "count": 1, "powerBonus": 0.9 }
+      ],
+      "rewardTable": "trial_2",
+      "pickCount": 3
+    },
+    {
+      "floor": 3,
+      "name": "玄岩禁地",
+      "unlockTier": 2,
+      "recommendedPower": 430,
+      "cooldownDays": 2,
+      "waves": [
+        { "monster": "panther", "count": 5, "powerBonus": 1.05 },
+        { "monster": "stone_beast", "count": 3, "powerBonus": 1.25 },
+        { "monster": "wolf_king", "count": 1, "powerBonus": 1.5 }
+      ],
+      "rewardTable": "trial_3",
+      "pickCount": 3
+    },
+    {
+      "floor": 4,
+      "name": "幽冥兽庭",
+      "unlockTier": 3,
+      "recommendedPower": 620,
+      "cooldownDays": 3,
+      "waves": [
+        { "monster": "stone_beast", "count": 4, "powerBonus": 1.7 },
+        { "monster": "panther", "count": 6, "powerBonus": 1.95 },
+        { "monster": "wolf_king", "count": 1, "powerBonus": 2.25 }
+      ],
+      "rewardTable": "trial_4",
+      "pickCount": 3
+    },
+    {
+      "floor": 5,
+      "name": "焚天王座",
+      "unlockTier": 4,
+      "recommendedPower": 860,
+      "cooldownDays": 4,
+      "waves": [
+        { "monster": "panther", "count": 7, "powerBonus": 2.45 },
+        { "monster": "stone_beast", "count": 5, "powerBonus": 2.7 },
+        { "monster": "wolf_king", "count": 1, "powerBonus": 3.0 }
+      ],
+      "rewardTable": "trial_5",
+      "pickCount": 3
+    }
+  ]
+}

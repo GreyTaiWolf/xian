@@ -3,6 +3,7 @@
  * 装配：状态/存档/主循环/世界时钟/游戏运行时/弹层/屏幕切换。
  */
 import './ui/theme.css';
+import './ui/v2.css';
 
 import { bus } from './core/eventbus';
 import { config } from './core/config';
@@ -179,6 +180,7 @@ function createWorld(name: string, seed: number, useAi: boolean): void {
       eventFlags: {},
       eventCooldowns: {},
       realmEntered: false,
+      realmProgress: { highestCleared: 0, totalClears: 0, readyDay: 1, pendingRewards: [] },
     },
     simulation: createWorldSimulation(seed, 1),
   }));

@@ -120,6 +120,17 @@ export function buildSettingsModal(opts: {
         <option value="0">关闭（模板事件）</option>
       </select>
     </div>
+    <div class="field check">
+      <input type="checkbox" id="autoSkills" checked>
+      <label>自动施展已解锁技能（仍遵守灵力与冷却）</label>
+    </div>
+    <div class="field">
+      <label>战斗表现速度</label>
+      <select id="combatSpeed">
+        <option value="1">1× 沉浸</option>
+        <option value="2">2× 加速</option>
+      </select>
+    </div>
     <div class="field"><label>音乐音量</label><input type="range" id="musicVol" min="0" max="100"></div>
     <div class="field"><label>音效音量</label><input type="range" id="sfxVol" min="0" max="100"></div>
     `,
@@ -137,6 +148,8 @@ export function buildSettingsModal(opts: {
     directorIntervalDays: parseInt(m.q<HTMLSelectElement>('#interval')!.value, 10) || 1,
     musicVolume: parseInt(m.q<HTMLInputElement>('#musicVol')!.value, 10),
     sfxVolume: parseInt(m.q<HTMLInputElement>('#sfxVol')!.value, 10),
+    autoSkills: m.q<HTMLInputElement>('#autoSkills')!.checked,
+    combatSpeed: m.q<HTMLSelectElement>('#combatSpeed')!.value === '2' ? 2 : 1,
   });
 
   const originalOpen = m.open.bind(m);
@@ -147,6 +160,8 @@ export function buildSettingsModal(opts: {
     m.q<HTMLSelectElement>('#interval')!.value = String(s.directorIntervalDays);
     m.q<HTMLInputElement>('#musicVol')!.value = String(s.musicVolume);
     m.q<HTMLInputElement>('#sfxVol')!.value = String(s.sfxVolume);
+    m.q<HTMLInputElement>('#autoSkills')!.checked = s.autoSkills;
+    m.q<HTMLSelectElement>('#combatSpeed')!.value = String(s.combatSpeed);
     originalOpen();
   };
 

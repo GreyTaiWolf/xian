@@ -1,0 +1,72 @@
+{
+  "version": 2,
+  "timings": {
+    "playerBasic": {
+      "windup": 130,
+      "travel": 115,
+      "impact": 72,
+      "recover": 245
+    },
+    "enemyBasic": {
+      "windup": 180,
+      "travel": 125,
+      "impact": 82,
+      "recover": 285
+    },
+    "skill": {
+      "windup": 265,
+      "travel": 165,
+      "impact": 110,
+      "recover": 340
+    },
+    "boss": {
+      "windup": 420,
+      "travel": 190,
+      "impact": 145,
+      "recover": 460
+    }
+  },
+  "attackInterval": {
+    "formula": "clamp(baseMs - clamp(speed, speedMin, speedMax) * reductionPerSpeedMs, minMs, maxMs)",
+    "baseMs": 1180,
+    "reductionPerSpeedMs": 18,
+    "speedMin": 0,
+    "speedMax": 48,
+    "minMs": 420,
+    "maxMs": 1600
+  },
+  "visual": {
+    "lungeDistanceTiles": 0.42,
+    "lungeOvershoot": 1.08,
+    "recoilDistanceTiles": 0.12,
+    "projectileArcTiles": 0.24,
+    "trailLengthTiles": 0.68,
+    "trailWidthPx": 3.5,
+    "trailFadeMs": 180,
+    "hitStopMs": 42,
+    "impactFlashMs": 96,
+    "targetFlashMs": 135,
+    "screenShakeMs": 145,
+    "screenShakePx": 4.5,
+    "bossScreenShakePx": 7.5,
+    "impactRingMs": 260,
+    "impactRingStartPx": 7,
+    "impactRingEndPx": 34,
+    "slashLengthPx": 48,
+    "slashWidthPx": 4,
+    "damageNumberRisePx": 34,
+    "damageNumberLifeMs": 760,
+    "criticalScale": 1.28,
+    "criticalShakeMultiplier": 1.45,
+    "reducedMotionDurationScale": 0.45,
+    "maxParticlesPerImpact": 18,
+    "colors": {
+      "player": "#d7bc72",
+      "enemy": "#d5655d",
+      "skill": "#78c7d2",
+      "critical": "#ffd46a",
+      "guard": "#aab8c6",
+      "shadow": "rgba(4, 7, 10, 0.72)"
+    }
+  }
+}

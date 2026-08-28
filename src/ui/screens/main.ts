@@ -13,7 +13,7 @@ import { Renderer } from '../../render/renderer';
 import type { GameRuntime, HudData } from '../../systems/runtime';
 import { canAffordChoice, choiceCostText } from '../../systems/travelEvents';
 import { panelBuilders, type PanelCtx } from '../panels';
-import { derivedStats, realmOf, xpNeed } from '../../game/stats';
+import { derivedStats, gradeDefColor, itemDisplayName, itemTemplate, realmOf, xpNeed } from '../../game/stats';
 
 export interface MainCallbacks {
   onSettings(): void;
@@ -27,47 +27,87 @@ export interface MainShell {
 
 export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: MainCallbacks): MainShell {
   const s = store.get();
+  const skillButtons = config.skills.skills
+    .map(
+      (skill, index) => `
+        <button class="skill-btn${index === 0 ? ' primary' : ''}" data-act="skill" data-skill="${skill.id}" aria-label="施展${skill.name}">
+          <span class="skill-key">${index + 1}</span>
+          <span class="skill-glyph">${index === 0 ? '御' : index === 1 ? '阵' : '破'}</span>
+          <span class="skill-copy skill-meta"><b>${skill.shortName}</b><small>${skill.mp} 灵力</small></span>
+          <span class="skill-cd cooldown-ring"></span>
+        </button>`,
+    )
+    .join('');
 
   const root = el('div');
   root.id = 'game';
   root.innerHTML = `
     <div id="topbar">
+      <div class="v2-brand"><span class="brand-mark">仙</span><span class="brand-ver">V2.0</span></div>
       <span class="world" id="worldNameTop"></span>
-      <span class="day">第 <span class="num" id="dayTop"></span> 日 · 晴</span>
+      <span class="day">第 <span class="num" id="dayTop"></span> 日</span>
+      <span class="world-pulse"><i></i><span id="worldPulseText">世势平衡</span></span>
       <span class="ai-chip" id="aiChip"><i></i>天道 AI <span id="aiState"></span></span>
       <span class="ai-chip aura" id="auraChip" style="display:none"><i></i><span id="auraText"></span></span>
       <span class="spacer"></span>
+      <button class="combat-toggle" data-act="auto" aria-label="切换自动技能">自动 <b id="autoState">开</b></button>
+      <button class="combat-toggle" data-act="speed" aria-label="切换战斗速度"><b id="speedState">×1</b></button>
       <span class="goldc num" id="hudMoney"></span><span class="goldc" style="font-size:12px">灵石</span>
       <span style="color:var(--tx2);font-size:12px">境界</span><span class="goldc" id="hudRealmTop" style="font-size:12px"></span>
       <button class="btn sm" data-act="settings">设置</button>
     </div>
     <div id="mid">
-      <div id="sideL">${charCard(s)}</div>
+      <aside id="sideL">
+        <div class="side-kicker">修士档案</div>
+        ${charCard(s)}
+        <div class="v2-divider"></div>
+        <div class="combat-doctrine">
+          <span>战斗演算</span><b>行动时间线</b>
+          <small>前摇 → 位移 → 命中 → 收招</small>
+        </div>
+        <div class="pity-line"><span>天道保底</span><b><span id="hudPity">0</span>/<span id="hudPityMax">10</span></b></div>
+      </aside>
       <div id="center">
         <div id="view">
           <canvas id="terrainCanvas"></canvas>
-          <div id="hint">WASD / 点击移动 · 空格 = 御剑术 · 靠近掉落自动拾取</div>
+          <div id="combatHud">
+            <div id="targetHud" class="combat-card no-target">
+              <div class="target-row"><span class="target-rune">敌</span><div><small>当前目标</small><b id="targetName">尚未锁定</b></div><span id="targetLevel"></span></div>
+              <div class="target-bar" id="targetHp"><i id="targetHpFill"></i></div>
+              <div class="target-meta" id="targetMeta"><span id="targetHpText">—</span><span id="targetDistance">巡游中</span></div>
+            </div>
+            <div id="trialHud" class="combat-card hidden">
+              <small>灵雾秘境</small><b id="trialName"></b>
+              <div class="trial-progress trial-wave active"><span id="trialWave"></span><span id="trialKills"></span></div>
+            </div>
+          </div>
+          <div id="actionBanner"><span class="action-ink"></span><div><small id="actionPhase">待机</small><b id="actionLabel">寻敌</b></div></div>
+          <div id="turnRail" aria-label="行动顺序"></div>
+          <div id="trialRewards" class="trial-rewards hidden"></div>
+          <div id="hint">WASD / 点击移动 · 1/2/3 技能 · 靠近掉落自动拾取</div>
           <div id="minimap">
             <div class="title">小地图</div>
             <canvas id="mmCanvas" width="120" height="90"></canvas>
           </div>
         </div>
         <div id="bottom">
-          <div id="log"></div>
+          <div class="log-wrap"><div class="log-title"><span>战斗纪要</span><i>LIVE</i></div><div id="log"></div></div>
           <div id="actions">
-            <button class="btn primary" data-act="skill">御剑术</button>
-            <button class="btn" data-act="pickup">拾取</button>
-            <button class="btn" data-act="town">回城</button>
-            <button class="btn" data-act="realm">秘境</button>
-            <div class="hint-line">空格 = 御剑术</div>
+            <div class="skill-grid">${skillButtons}</div>
+            <div class="utility-grid">
+              <button class="btn" data-act="pickup">拾取</button>
+              <button class="btn" data-act="town">回城</button>
+              <button class="btn gold" data-act="realm">秘境</button>
+            </div>
           </div>
         </div>
       </div>
-      <div id="sideR">
-        <div id="tabbar"></div>
+      <aside id="sideR">
+        <div class="panel-heading"><div><small>洞天界面</small><b>行囊与成长</b></div><button id="panelClose" aria-label="关闭面板">×</button></div>
         <div id="panels"></div>
-      </div>
-    </div>`;
+      </aside>
+    </div>
+    <nav id="tabbar" aria-label="成长系统导航"></nav>`;
 
   // ---- 日志 ----
   const logEl = root.querySelector<HTMLElement>('#log')!;
@@ -80,9 +120,14 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
   const offLog = bus.on('log', (e) => log(e.cls, e.text));
 
   // ---- 面板 ----
+  const setPanelOpen = (open: boolean): void => {
+    root.classList.toggle('panel-open', open);
+    document.body.classList.toggle('panel-open', open);
+  };
   const pm = new PanelManager(
     root.querySelector<HTMLElement>('#tabbar')!,
     root.querySelector<HTMLElement>('#panels')!,
+    () => setPanelOpen(true),
   );
   const ctx: PanelCtx = { store, rt, log };
   config.ui.panels.forEach(({ id, label }) => {
@@ -91,6 +136,10 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
     pm.register({ id, label, element: builder(ctx).element });
   });
   pm.show(config.ui.panels[0]?.id ?? 'inv');
+  setPanelOpen(false);
+  root.querySelector<HTMLElement>('#panelClose')?.addEventListener('click', () => {
+    setPanelOpen(false);
+  });
 
   // ---- 状态同步 ----
   const syncWorld = (st: GameState): void => {
@@ -99,6 +148,12 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
     const chip = root.querySelector<HTMLElement>('#aiChip')!;
     chip.classList.toggle('off', !st.settings.aiEnabled);
     root.querySelector<HTMLElement>('#aiState')!.textContent = st.settings.aiEnabled ? '在线' : '离线';
+    const tension = st.world.faction.tension;
+    root.dataset.worldPulse = tension >= 80 ? 'danger' : tension >= 55 ? 'watch' : 'calm';
+    root.querySelector<HTMLElement>('#worldPulseText')!.textContent =
+      tension >= 80 ? '世势：血潮' : tension >= 55 ? '世势：暗涌' : '世势：清宁';
+    root.querySelector<HTMLElement>('#autoState')!.textContent = st.settings.autoSkills ? '开' : '关';
+    root.querySelector<HTMLElement>('#speedState')!.textContent = `×${st.settings.combatSpeed}`;
   };
   const syncMoney = (money: number): void => {
     root.querySelectorAll('[data-bind="money"]').forEach((n) => {
@@ -111,6 +166,7 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
   const offMoney = store.subscribe((st) => syncMoney(st.player.money));
 
   // ---- HUD（4Hz 热数据） ----
+  let rewardsKey = '';
   const applyHud = (d: HudData): void => {
     const set = (id: string, v: string): void => {
       const n = root.querySelector<HTMLElement>('#' + id);
@@ -132,14 +188,28 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
     set('hudSpd', String(d.spd));
     set('hudCrit', `${d.crit}%`);
     set('hudLuck', String(d.luck));
-    set('hudPower', String(d.atk + d.def * 2 + Math.round(d.hpMax / 10)));
+    set('hudPower', String(d.power));
+    set('hudPity', String(d.pity));
+    set('hudPityMax', String(d.pityMax));
     bar('hudHp', (d.hp / d.hpMax) * 100);
     bar('hudMp', (d.mp / d.mpMax) * 100);
     bar('hudXp', (d.xp / d.xpMax) * 100);
-    const sb = root.querySelector<HTMLElement>('[data-act="skill"]');
-    if (sb) {
-      sb.textContent = d.skillCd > 0 ? `${d.skillName} ${d.skillCd.toFixed(1)}s` : d.skillName;
-      sb.classList.toggle('off', d.skillCd > 0);
+    for (const skill of d.skills) {
+      const button = root.querySelector<HTMLElement>(`[data-skill="${skill.id}"]`);
+      if (!button) continue;
+      button.classList.toggle('locked', !skill.unlocked);
+      button.classList.toggle('cooling', skill.cooldown > 0);
+      button.classList.toggle('resource-low', skill.unlocked && skill.cooldown <= 0 && d.mp < skill.mp);
+      button.setAttribute('aria-disabled', String(!skill.ready));
+      const cooldown = button.querySelector<HTMLElement>('.skill-cd');
+      if (cooldown) {
+        cooldown.textContent = !skill.unlocked
+          ? '未解锁'
+          : skill.cooldown > 0
+            ? skill.cooldown.toFixed(1)
+            : '';
+        cooldown.style.setProperty('--cooldown', `${(skill.cooldown / Math.max(0.001, skill.cooldownMax)) * 100}%`);
+      }
     }
     const ac = root.querySelector<HTMLElement>('#auraChip');
     if (ac) {
@@ -152,8 +222,86 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
     }
     const rb = root.querySelector<HTMLElement>('[data-act="realm"]');
     if (rb) rb.classList.toggle('off', !d.realmReady);
+
+    const targetHud = root.querySelector<HTMLElement>('#targetHud')!;
+    root.classList.toggle('in-combat', !!d.target);
+    targetHud.classList.toggle('no-target', !d.target);
+    targetHud.classList.toggle('boss-target', !!d.target?.boss);
+    if (d.target) {
+      set('targetName', d.target.name);
+      set('targetLevel', `Lv.${d.target.level}${d.target.boss ? ' · 首领' : d.target.elite ? ' · 精英' : ''}`);
+      set('targetHpText', `${d.target.hp} / ${d.target.hpMax}`);
+      set('targetDistance', `${d.target.distance.toFixed(1)} 格`);
+      bar('targetHpFill', (d.target.hp / d.target.hpMax) * 100);
+    } else {
+      set('targetName', '尚未锁定');
+      set('targetLevel', '');
+      set('targetHpText', '—');
+      set('targetDistance', '巡游中');
+      bar('targetHpFill', 0);
+    }
+
+    set('actionLabel', d.actionLabel);
+    set('actionPhase', d.actionPhase);
+    const banner = root.querySelector<HTMLElement>('#actionBanner')!;
+    banner.dataset.phase = d.combat.active?.phase ?? 'idle';
+    banner.classList.toggle('is-skill', d.combat.active?.kind === 'skill');
+
+    const rail = root.querySelector<HTMLElement>('#turnRail')!;
+    const railActions = [d.combat.active, ...d.combat.queued].filter(Boolean).slice(0, 5);
+    rail.replaceChildren();
+    railActions.forEach((action, index) => {
+      if (!action) return;
+      const isPlayer = action.actor.kind === 'player';
+      const node = el('div', `turn-node turn-item ${isPlayer ? 'player' : 'enemy'} ${index === 0 && d.combat.active ? 'active' : ''}`);
+      node.innerHTML = `<span>${isPlayer ? action.kind === 'skill' ? '诀' : '剑' : '妖'}</span><small>${index === 0 && d.combat.active ? d.actionPhase : '候'}</small>`;
+      node.title = isPlayer ? '玩家行动' : '敌方行动';
+      rail.appendChild(node);
+    });
+
+    const trialHud = root.querySelector<HTMLElement>('#trialHud')!;
+    trialHud.classList.toggle('hidden', !d.trial);
+    if (d.trial) {
+      set('trialName', d.trial.name);
+      const statusText = d.trial.status === 'between'
+        ? `第 ${d.trial.wave}/3 波 · ${d.trial.nextWaveIn.toFixed(1)}s`
+        : d.trial.status === 'victory'
+          ? '三波通关'
+          : d.trial.status === 'failed'
+            ? '试炼失败'
+            : `第 ${d.trial.wave}/3 波`;
+      set('trialWave', statusText);
+      set('trialKills', `${d.trial.defeated}/${d.trial.total}`);
+    }
+
+    const rewards = store.get().world.realmProgress.pendingRewards;
+    const nextRewardsKey = rewards.map((item) => item.uid).join(',');
+    if (nextRewardsKey !== rewardsKey) {
+      rewardsKey = nextRewardsKey;
+      const rewardRoot = root.querySelector<HTMLElement>('#trialRewards')!;
+      rewardRoot.classList.toggle('hidden', rewards.length === 0);
+      rewardRoot.replaceChildren();
+      if (rewards.length > 0) {
+        const heading = el('div', 'reward-heading');
+        heading.innerHTML = '<small>秘境通关</small><b>择一件本命战利品</b><span>选择后其余奖励化入灵雾</span>';
+        rewardRoot.appendChild(heading);
+        const choices = el('div', 'reward-choices');
+        for (const reward of rewards) {
+          const template = itemTemplate(reward.templateId);
+          if (!template) continue;
+          const button = el('button', 'reward-choice');
+          button.dataset.uid = String(reward.uid);
+          button.style.setProperty('--reward-color', gradeDefColor(template.grade));
+          button.innerHTML = `<span class="reward-rune">${template.char ?? '◆'}</span><b>${itemDisplayName(template)}${reward.plus ? ` +${reward.plus}` : ''}</b><small>${reward.affixes.length} 条词缀 · 点击选取</small>`;
+          button.addEventListener('click', () => rt.claimTrialReward(reward.uid));
+          choices.appendChild(button);
+        }
+        rewardRoot.appendChild(choices);
+      }
+    }
   };
   const offHud = bus.on('hud', applyHud);
+  applyHud(rt.hudData());
 
   // ---- 渲染 ----
   const canvas = root.querySelector<HTMLCanvasElement>('#terrainCanvas')!;
@@ -164,8 +312,8 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
     const r = view.getBoundingClientRect();
     renderer.resize(r.width, r.height, window.devicePixelRatio || 1);
     renderer.drawWorld(rt);
-    // 小地图：地形层每 16 格缓存，覆盖层每帧
-    const mmKey = `${Math.floor(rt.player.x / 16)},${Math.floor(rt.player.y / 16)}`;
+    // 小地图：每 2 格重采样地形，覆盖层逐帧刷新；避免区块内地形与标记漂移。
+    const mmKey = `${Math.floor(rt.player.x / 2)},${Math.floor(rt.player.y / 2)}`;
     if (mmKey !== lastMmKey) {
       lastMmKey = mmKey;
       renderer.drawMinimapTerrain(mmCtx, rt, 120, 90);
@@ -332,6 +480,7 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
   };
   const onKeyDown = (e: KeyboardEvent): void => {
     if (isTyping(e.target)) return;
+    if (e.code === 'Escape') setPanelOpen(false);
     keys.add(e.code);
     updateMoveDir();
   };
@@ -342,7 +491,7 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
 
-  canvas.addEventListener('mousedown', (e) => {
+  canvas.addEventListener('pointerdown', (e) => {
     const r = view.getBoundingClientRect();
     const [wx, wy] = renderer.camera.screenToWorld(e.clientX - r.left, e.clientY - r.top, r.width, r.height);
     rt.moveTarget = { x: wx, y: wy };
@@ -351,10 +500,18 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
 
   // ---- 操作 ----
   root.querySelector<HTMLElement>('[data-act="settings"]')!.addEventListener('click', cb.onSettings);
-  root.querySelector<HTMLElement>('[data-act="skill"]')!.addEventListener('click', () => rt.castSkill());
+  root.querySelectorAll<HTMLElement>('[data-act="skill"]').forEach((button) => {
+    button.addEventListener('click', () => rt.castSkill(button.dataset.skill));
+  });
   root.querySelector<HTMLElement>('[data-act="pickup"]')!.addEventListener('click', () => rt.pickupNearby(1.5));
   root.querySelector<HTMLElement>('[data-act="town"]')!.addEventListener('click', () => rt.returnToTown());
   root.querySelector<HTMLElement>('[data-act="realm"]')!.addEventListener('click', () => rt.enterRealm());
+  root.querySelector<HTMLElement>('[data-act="auto"]')!.addEventListener('click', () => {
+    store.set((st) => ({ ...st, settings: { ...st.settings, autoSkills: !st.settings.autoSkills } }));
+  });
+  root.querySelector<HTMLElement>('[data-act="speed"]')!.addEventListener('click', () => {
+    store.set((st) => ({ ...st, settings: { ...st.settings, combatSpeed: st.settings.combatSpeed === 1 ? 2 : 1 } }));
+  });
 
   const unbind = bindHotkeys({
     KeyB: () => pm.show('inv'),
@@ -365,12 +522,16 @@ export function buildMainShell(store: Store<GameState>, rt: GameRuntime, cb: Mai
     KeyT: () => pm.show('quest'),
     KeyJ: () => pm.show('chron'),
     Space: () => rt.castSkill(),
+    Digit1: () => rt.castSkill(config.skills.skills[0]?.id),
+    Digit2: () => rt.castSkill(config.skills.skills[1]?.id),
+    Digit3: () => rt.castSkill(config.skills.skills[2]?.id),
   });
 
   return {
     root,
     render,
     dispose: () => {
+      setPanelOpen(false);
       unbind();
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
@@ -397,5 +558,5 @@ function charCard(s: GameState): string {
     <div class="stat-line"><span class="tag">速度</span><span class="spacer"></span><span class="num" id="hudSpd">${st.spd}</span><span style="width:34px"></span></div>
     <div class="stat-line"><span class="tag">暴击</span><span class="spacer"></span><span class="num" id="hudCrit">${st.crit}%</span><span style="width:34px"></span></div>
     <div class="stat-line"><span class="tag">幸运</span><span class="spacer"></span><span class="num" id="hudLuck">${st.luck}</span><span style="width:34px"></span></div>
-    <div class="power">战力 <b class="goldc" id="hudPower">${st.atk + st.def * 2 + Math.round(st.hpMax / 10)}</b></div>`;
+    <div class="power">战力 <b class="goldc" id="hudPower">${st.atk + st.def * 2 + Math.round(st.hpMax / 10) + Math.round(st.spd * 3 + st.crit * 2)}</b></div>`;
 }
